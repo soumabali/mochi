@@ -1,4 +1,4 @@
-# Dependencies
+Dependencies
 node_modules/
 __pycache__/
 *.pyc
@@ -24,8 +24,12 @@ Thumbs.db
 *.log
 logs/
 
-# Data & backups (keep examples, ignore real data)
+# Data backups
 04-data/backups/*.sql
 04-data/backups/*.tar.gz
 !04-data/backups/.gitkeep
 !04-data/backups/README.md
+
+# Assets (symlinked from workspace, too large for git)
+Assets/Sprite
+Assets/Sound

@@ -1,0 +1,24 @@
+{
+  "name": "mochi-v2",
+  "created_at": "2026-07-05T00:00:00+08:00",
+  "current_phase": 0,
+  "status": "active",
+  "max_workers": 3,
+  "stack": "WPF .NET 8 C#",
+  "domain": "desktop",
+  "budget": { "usd_cap": null, "spent_usd": 0, "alert_at_pct": 80 },
+  "executor": {
+    "root_dir": "/home/ubuntu/projects/mochi-v2",
+    "app_subdir": "02-application",
+    "allowed_tools": "Read,Write,Edit,Bash(git diff),Bash(ls),Bash(grep),Bash(cd),Bash(mkdir),Bash(dotnet build),Bash(dotnet test)",
+    "models": {
+      "build": "tllm/claude_sonnet_4",
+      "vision": null,
+      "dry_run": "ollamacloud/kimi-k2.7-code"
+    }
+  },
+  "phases": {
+    "0": "INIT", "1": "PRD", "2": "DESIGN", "3": "PLAN",
+    "4": "BUILD", "5": "TEST", "6": "FIX", "7": "CLOSE"
+  }
+}
