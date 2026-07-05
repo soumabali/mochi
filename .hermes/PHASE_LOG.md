@@ -22,3 +22,8 @@ Events: `enter`, `gate-review`, `progress-report`, `close`.
 - verdict: approved
 - by: Dhar
 - notes: All 3 open questions resolved. .NET 9 confirmed. GitHub repo soumabali/mochi (remote added, local-first). EN-only MVP. D-003 recorded.
+
+## 2026-07-05T01:30:00+08:00 | phase 2 DESIGN | enter
+- verdict: report
+- by: Hermes (Ame)
+- notes: DESIGN.md written (6 sections: design language, tokens, window states, screens, architecture, testing strategy). 4 mockups: S-1 overlay diagram, S-2 settings, S-3 tray menu, S-4 stats popup. 3 open design questions (all with recommended resolution).

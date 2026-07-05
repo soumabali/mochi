@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>S-1: Transparent Overlay Diagram</title>
+<style>
+  body { margin: 0; background: #2a2a2e; font-family: 'Segoe UI', sans-serif; color: #fff; display: flex; align-items: center; justify-content: center; min-height: 100vh; }
+  .desktop { width: 800px; height: 450px; background: linear-gradient(135deg, #1a1a2e, #16213e); border-radius: 8px; position: relative; overflow: hidden; border: 1px solid #333; }
+  .desktop::before { content: 'Desktop (other apps visible here)'; position: absolute; top: 12px; left: 16px; color: #555; font-size: 12px; }
+  .taskbar { position: absolute; bottom: 0; left: 0; right: 0; height: 28px; background: #0d0d1a; border-top: 1px solid #333; display: flex; align-items: center; padding: 0 12px; font-size: 11px; color: #666; }
+  .taskbar::before { content: '⚙ Taskbar (Mochi walks above this)'; }
+
+  /* Mochi overlay area */
+  .overlay-window { position: absolute; bottom: 28px; left: 300px; width: 320px; height: 200px; border: 2px dashed rgba(232,160,191,0.4); border-radius: 4px; }
+  .overlay-label { position: absolute; top: -20px; left: 0; font-size: 10px; color: rgba(232,160,191,0.6); }
+
+  /* Sprite bounds (actual visible cat) */
+  .sprite-bounds { position: absolute; bottom: 28px; left: 360px; width: 200px; height: 113px; border: 2px solid #E8A0BF; border-radius: 8px; display: flex; align-items: center; justify-content: center; background: rgba(232,160,191,0.05); }
+  .sprite-bounds-label { position: absolute; top: -18px; left: 0; font-size: 10px; color: #E8A0BF; }
+  .cat { font-size: 48px; }
+
+  /* Particle margin */
+  .particle-margin { position: absolute; bottom: 20px; left: 340px; width: 240px; height: 140px; border: 1px dotted rgba(255,180,162,0.3); border-radius: 12px; }
+  .particle-margin-label { position: absolute; top: -16px; right: 0; font-size: 9px; color: rgba(255,180,162,0.5); }
+
+  /* Particles */
+  .heart { position: absolute; font-size: 14px; color: #E8A0BF; animation: float 3s infinite; }
+  .zzz { position: absolute; font-size: 14px; color: #9575CD; animation: float-z 3s infinite; }
+  .exclaim { position: absolute; font-size: 18px; color: #EF5350; font-weight: bold; }
+  .dust { position: absolute; width: 12px; height: 12px; border: 1px solid rgba(255,255,255,0.3); border-radius: 50%; }
+
+  @keyframes float { 0% { bottom: 0; opacity: 1; } 100% { bottom: 80px; opacity: 0; } }
+  @keyframes float-z { 0% { bottom: 40px; left: 40%; opacity: 1; } 100% { bottom: 120px; left: 60%; opacity: 0; } }
+
+  /* Hit test zones */
+  .hit-zone { position: absolute; bottom: 28px; left: 210px; width: 500px; height: 200px; border: 1px dashed rgba(255,255,255,0.15); border-radius: 4px; }
+  .hit-label { position: absolute; top: -16px; left: 0; font-size: 9px; color: rgba(255,255,255,0.2); }
+
+  .legend { position: absolute; bottom: 50px; right: 20px; font-size: 10px; color: #888; }
+  .legend div { margin: 4px 0; }
+  .legend .dot { display: inline-block; width: 10px; height: 10px; border-radius: 2px; margin-right: 6px; vertical-align: middle; }
+</style>
+</head>
+<body>
+<div class="desktop">
+  <!-- Hit test zone (150px from sprite) -->
+  <div class="hit-zone">
+    <span class="hit-label">Hit-test zone (150px proximity → face cursor)</span>
+  </div>
+
+  <!-- Particle margin -->
+  <div class="particle-margin">
+    <span class="particle-margin-label">particle margin (32px)</span>
+  </div>
+
+  <!-- Overlay window (full bounding box) -->
+  <div class="overlay-window">
+    <span class="overlay-label">Overlay window rect (click-through outside sprite)</span>
+  </div>
+
+  <!-- Sprite bounds (actual visible cat) -->
+  <div class="sprite-bounds">
+    <span class="sprite-bounds-label">Sprite bounds (hit-test ON when cursor here)</span>
+    <span class="cat">🐱</span>
+  </div>
+
+  <!-- Particles -->
+  <div class="heart" style="bottom: 140px; left: 380px;">❤️</div>
+  <div class="heart" style="bottom: 160px; left: 420px; animation-delay: 1s;">❤️</div>
+  <div class="zzz" style="bottom: 160px; left: 480px;">💤</div>
+  <div class="exclaim" style="bottom: 170px; left: 440px;">!</div>
+  <div class="dust" style="bottom: 28px; left: 370px;"></div>
+  <div class="dust" style="bottom: 28px; left: 390px; width: 8px; height: 8px;"></div>
+
+  <div class="legend">
+    <div><span class="dot" style="background: #E8A0BF;"></span>Sprite bounds (interact zone)</div>
+    <div><span class="dot" style="background: rgba(255,180,162,0.3);"></span>Particle margin</div>
+    <div><span class="dot" style="background: rgba(255,255,255,0.15);"></span>Hit-test proximity</div>
+    <div><span class="dot" style="background: rgba(232,160,191,0.4);"></span>Window rect (click-through)</div>
+  </div>
+
+  <div class="taskbar"></div>
+</div>
+</body>
+</html>
