@@ -4,7 +4,7 @@
   "current_phase": 0,
   "status": "active",
   "max_workers": 3,
-  "stack": "WPF .NET 8 C#",
+  "stack": "WPF .NET 9 C#",
   "domain": "desktop",
   "budget": { "usd_cap": null, "spent_usd": 0, "alert_at_pct": 80 },
   "executor": {
