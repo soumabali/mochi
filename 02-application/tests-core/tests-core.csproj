@@ -24,6 +24,8 @@
   <ItemGroup>
     <Compile Include="..\Core\Models\*.cs" Link="Core\Models\%(FileName)%(Extension)" />
     <Compile Include="..\Core\Animation\*.cs" Link="Core\Animation\%(FileName)%(Extension)" />
+    <Compile Include="..\Core\Behavior\*.cs" Link="Core\Behavior\%(FileName)%(Extension)" />
+    <Compile Include="..\Core\Events\*.cs" Link="Core\Events\%(FileName)%(Extension)" />
   </ItemGroup>
 
 </Project>
