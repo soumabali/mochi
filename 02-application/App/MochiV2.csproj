@@ -23,6 +23,21 @@
     <InternalsVisibleTo Include="MochiV2.Tests" />
   </ItemGroup>
 
+  <!-- Core / Infrastructure / UI source files live as siblings of App/
+       per DESIGN §4.1. Link them into this project's compilation. -->
+  <ItemGroup>
+    <Compile Include="..\Core\**\*.cs" Link="Core\%(RecursiveDir)%(FileName)%(Extension)" />
+    <Compile Include="..\Infrastructure\**\*.cs" Link="Infrastructure\%(RecursiveDir)%(FileName)%(Extension)" />
+    <Compile Include="..\UI\**\*.cs" Link="UI\%(RecursiveDir)%(FileName)%(Extension)" />
+  </ItemGroup>
+
+  <!-- manifest.json copied to output for runtime loading -->
+  <ItemGroup>
+    <None Include="..\Assets\manifest.json" Link="Assets\manifest.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+  </ItemGroup>
+
   <ItemGroup>
     <!-- D-4: SkiaSharp SKElement for 60fps WPF rendering (sprite + particles).
          The task spec said "SkiaSharp.Views.Desktop" but that package ID does
