@@ -222,9 +222,9 @@ No external APIs. Internal event bus:
 
 | # | Question | Status |
 |---|----------|--------|
-| OQ-1 | .NET 8 vs .NET 9? Original PRD says .NET 9, but .NET 8 is LTS. | Pending Dhar decision |
-| OQ-2 | GitHub repo name when ready? | Deferred |
-| OQ-3 | EN/ID string resources — full ID translation in MVP or EN-only with ID stub? | Pending Dhar decision |
+| ~~OQ-1~~ | ~~.NET 8 vs .NET 9?~~ | **RESOLVED:** .NET 9 (per PRD §12) |
+| ~~OQ-2~~ | ~~GitHub repo name when ready?~~ | **RESOLVED:** `soumabali/mochi` |
+| ~~OQ-3~~ | ~~EN/ID string resources — full ID translation in MVP or EN-only with ID stub?~~ | **RESOLVED:** EN-only for MVP, resource structure ready for ID |
 
 ---
 

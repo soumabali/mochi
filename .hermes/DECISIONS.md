@@ -22,8 +22,8 @@ here, it's not done. Link `D-###` in DISPATCH_LOG and commit body.
 - alternatives: Godot (v1), Tauri, Electron
 - supersedes: none
 
-## D-002 | 2026-07-05 | Local-only git, GitHub later
-- decision: Initialize local git repo only, no remote yet
-- reason: Dhar prefers local-first, GitHub remote setup deferred to later phase
-- alternatives: Create GitHub repo on day 1
+## D-003 | 2026-07-05 | Open questions resolved
+- decision: .NET 9 (per PRD §12). GitHub repo: soumabali/mochi (local-first, remote added). EN-only strings for MVP with resource structure ready for ID.
+- reason: Dhar approved all three. .NET 9 follows PRD spec. EN-only reduces MVP scope.
+- alternatives: .NET 8 LTS (rejected — PRD says 9). Full ID translation (rejected — post-MVP).
 - supersedes: none
