@@ -30,6 +30,16 @@ logs/
 !04-data/backups/.gitkeep
 !04-data/backups/README.md
 
-# Assets (symlinked from workspace, too large for git)
+#Assets (symlinked from workspace, too large for git)
 Assets/Sprite
 Assets/Sound
+
+# .NET build artifacts
+[Bb]in/
+[Oo]bj/
+[Dd]ebug/
+[Rr]elease/
+*.user
+*.suo
+*.cache
+TestResults/

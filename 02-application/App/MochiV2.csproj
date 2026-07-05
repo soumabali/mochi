@@ -1,0 +1,43 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net9.0-windows</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <UseWPF>true</UseWPF>
+    <!-- Allow restore (and limited build) of Windows-TFM projects on Linux -->
+    <EnableWindowsTargeting>true</EnableWindowsTargeting>
+    <ApplicationManifest>app.manifest</ApplicationManifest>
+    <RootNamespace>MochiV2</RootNamespace>
+    <AssemblyName>MochiV2</AssemblyName>
+    <!-- Use our explicit Program.Main (single-instance mutex + DI bootstrap)
+         instead of the WPF auto-generated App.Main. -->
+    <StartupObject>MochiV2.Program</StartupObject>
+    <Version>0.1.0</Version>
+    <Company>NekoCompanion</Company>
+    <Product>MochiV2</Product>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <InternalsVisibleTo Include="MochiV2.Tests" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- D-4: SkiaSharp SKElement for 60fps WPF rendering (sprite + particles).
+         The task spec said "SkiaSharp.Views.Desktop" but that package ID does
+         not exist on NuGet; the correct WPF-specific package is Views.WPF. -->
+    <PackageReference Include="SkiaSharp.Views.WPF" Version="2.88.9" />
+    <PackageReference Include="Serilog" Version="4.0.0" />
+    <PackageReference Include="Serilog.Sinks.Console" Version="6.0.0" />
+    <PackageReference Include="Serilog.Sinks.File" Version="6.0.0" />
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="9.0.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Update="app.manifest">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+  </ItemGroup>
+
+</Project>
