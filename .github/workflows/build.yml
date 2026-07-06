@@ -1,0 +1,41 @@
+name: Build MochiV2
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  build:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup .NET 9
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '9.0.x'
+
+      - name: Restore
+        working-directory: 02-application
+        run: dotnet restore MochiV2.sln
+
+      - name: Build
+        working-directory: 02-application
+        run: dotnet build MochiV2.sln --configuration Release --no-restore
+
+      - name: Test
+        working-directory: 02-application
+        run: dotnet test tests-core --configuration Release --no-build
+
+      - name: Publish single-file exe
+        working-directory: 02-application/App
+        run: dotnet publish MochiV2.csproj --configuration Release -r win-x64 --self-contained false -p:PublishSingleFile=true -p:IncludeNativeLibrariesForSelfExtract=true -o ../../publish
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: MochiV2-win-x64
+          path: publish/
+          retention-days: 30
