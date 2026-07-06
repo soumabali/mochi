@@ -47,7 +47,8 @@
     <PackageReference Include="Serilog.Sinks.Console" Version="6.0.0" />
     <PackageReference Include="Serilog.Sinks.File" Version="6.0.0" />
     <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="9.0.0" />
-  </ItemGroup>
+    <PackageReference Include="NAudio" Version="2.2.1" />
+    </ItemGroup>
 
   <ItemGroup>
     <None Update="app.manifest">
