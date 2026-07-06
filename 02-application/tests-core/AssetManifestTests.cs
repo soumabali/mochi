@@ -175,7 +175,7 @@ namespace MochiV2.Tests.Core
                     "TestState": { "folder": "Sprite/missing_folder", "mode": "loop" }
                   },
                   "sounds": {
-                    "TestSound": "Sound/missing.wav"
+                    "TestSound": "Sound/missing.ogg"
                   },
                   "statesWithoutSound": [],
                   "soundSettings": {
@@ -201,7 +201,7 @@ namespace MochiV2.Tests.Core
                 Assert.Equal(2, missing.Count); // missing folder + missing sound
                 Assert.Equal(2, events.Count);
                 Assert.Contains(("TestState", Path.Combine(tempDir, "Sprite", "missing_folder")), events);
-                Assert.Contains(("TestSound", Path.Combine(tempDir, "Sound", "missing.wav")), events);
+                Assert.Contains(("TestSound", Path.Combine(tempDir, "Sound", "missing.ogg")), events);
             }
             finally
             {

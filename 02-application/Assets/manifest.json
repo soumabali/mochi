@@ -103,17 +103,17 @@
     }
   },
   "sounds": {
-    "Angry": "Sound/cat_angry_scratch_paw.wav",
-    "Begging": "Sound/cat_begging.wav",
-    "Eating": "Sound/cat_begging.wav",
-    "Blink": "Sound/cat_blinking.wav",
-    "Playful": "Sound/cat_chasing_wand.wav",
-    "Meow": "Sound/cat_meowing.wav",
-    "Scratch": "Sound/cat_scratching.wav",
-    "Sleep": "Sound/cat_sleepy.wav",
-    "Surprised": "Sound/cat_surprised.wav",
-    "Walk": "Sound/cat_walking.wav",
-    "WalkForward": "Sound/cat_walking_forward.wav"
+    "Angry": "Sound/cat_angry_scratch_paw.ogg",
+    "Begging": "Sound/cat_begging.ogg",
+    "Eating": "Sound/cat_begging.ogg",
+    "Blink": "Sound/cat_blinking.ogg",
+    "Playful": "Sound/cat_chasing_wand.ogg",
+    "Meow": "Sound/cat_meowing.ogg",
+    "Scratch": "Sound/cat_scratching.ogg",
+    "Sleep": "Sound/cat_sleepy.ogg",
+    "Surprised": "Sound/cat_surprised.ogg",
+    "Walk": "Sound/cat_walking.ogg",
+    "WalkForward": "Sound/cat_walking_forward.ogg"
   },
   "statesWithoutSound": [
     "IdleLeft",

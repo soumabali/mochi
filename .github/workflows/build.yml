@@ -31,9 +31,9 @@ jobs:
         run: dotnet test tests-core --configuration Release --no-build
         continue-on-error: true
 
-      - name: Publish self-contained single-file exe
+      - name: Publish framework-dependent single-file exe
         working-directory: 02-application/App
-        run: dotnet publish MochiV2.csproj --configuration Release -r win-x64 --self-contained true -p:PublishSingleFile=true -p:IncludeNativeLibrariesForSelfExtract=true -o ../../publish
+        run: dotnet publish MochiV2.csproj --configuration Release -r win-x64 --self-contained false -p:PublishSingleFile=true -p:IncludeNativeLibrariesForSelfExtract=true -p:TrimUnusedAssemblies=true -o ../../publish
 
       - name: Bundle assets into publish folder
         shell: pwsh
@@ -41,7 +41,8 @@ jobs:
           Copy-Item -Path 02-application/Assets/Sprite_optimized -Destination publish/Assets/Sprite_optimized -Recurse -Force
           Copy-Item -Path 02-application/Assets/Sound -Destination publish/Assets/Sound -Recurse -Force
           Copy-Item -Path 02-application/Assets/manifest.json -Destination publish/Assets/manifest.json -Force
-          Write-Host "Bundle size: $((Get-ChildItem publish -Recurse | Measure-Object -Property Length -Sum).Sum / 1MB)MB"
+          $size = (Get-ChildItem publish -Recurse | Measure-Object -Property Length -Sum).Sum / 1MB
+          Write-Host "Bundle size: $([math]::Round($size,1))MB"
 
       - name: Zip bundle
         shell: pwsh

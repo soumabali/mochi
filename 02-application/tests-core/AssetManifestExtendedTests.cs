@@ -302,7 +302,7 @@ namespace MochiV2.Tests.Core
             {
                 // Create a valid sound file so only the sprite is missing
                 Directory.CreateDirectory(Path.Combine(tempDir, "Sound"));
-                await File.WriteAllTextAsync(Path.Combine(tempDir, "Sound", "ok.wav"), "fake");
+                await File.WriteAllTextAsync(Path.Combine(tempDir, "Sound", "ok.ogg"), "fake");
 
                 string manifestJson = """
                 {
@@ -310,7 +310,7 @@ namespace MochiV2.Tests.Core
                         "TestState": { "folder": "Sprite/missing_folder", "mode": "loop" }
                     },
                     "sounds": {
-                        "TestSound": "Sound/ok.wav"
+                        "TestSound": "Sound/ok.ogg"
                     },
                     "statesWithoutSound": [],
                     "soundSettings": {

@@ -90,7 +90,7 @@ namespace MochiV2.Core.Models
         public Dictionary<string, SpriteEntry> Sprites { get; set; } = new();
 
         /// <summary>
-        /// Maps sound key → relative sound file path (e.g. "Sound/cat_meowing.wav").
+        /// Maps sound key → relative sound file path (e.g. "Sound/cat_meowing.ogg").
         /// </summary>
         [JsonPropertyName("sounds")]
         public Dictionary<string, string> Sounds { get; set; } = new();
