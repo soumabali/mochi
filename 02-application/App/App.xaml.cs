@@ -80,6 +80,12 @@ namespace MochiV2
         private double _walkTimer; // how long cat has been walking
         private double _walkDuration; // how long to walk before stopping
 
+        // Roaming
+        private double _wanderX; // target X for roaming
+        private double _wanderY; // target Y for roaming
+        private double _wanderRetargetTimer; // timer to pick new wander target
+        private double _jumpTimer; // tracks jump arc progress
+
         protected override void OnStartup(StartupEventArgs e)
         {
             base.OnStartup(e);
@@ -146,6 +152,11 @@ namespace MochiV2
                 _catY = _screenHeight - _spriteDisplaySize - 60;
                 _catVelX = 0;
                 _catVelY = 0;
+                // Init wander targets
+                _wanderX = _catX;
+                _wanderY = _catY;
+                _wanderRetargetTimer = 0;
+                _jumpTimer = 0;
                 Log.Information("Cat at ({X:.0}, {Y:.0}) screen {W:.0}x{H:.0}", _catX, _catY, _screenWidth, _screenHeight);
 
                 // 7. Start services
@@ -292,30 +303,64 @@ namespace MochiV2
         /// <summary>
         /// Move cat based on current FSM state with smooth easing.
         /// </summary>
+        /// <summary>
+        /// Move cat based on current FSM state with smooth easing.
+        /// Cat roams entire screen area — not just horizontal line.
+        /// Uses target X,Y waypoints for natural wandering.
+        /// </summary>
         private void UpdateMovement(double dt)
         {
             if (_fsm == null) return;
 
             double targetVelX = 0;
             double targetVelY = 0;
-            double speed = 80; // pixels per second
+            double speed = 100; // pixels per second
 
             switch (_fsm.CurrentState)
             {
                 case FSMState.WalkLeft:
                     targetVelX = -speed;
+                    // Wander vertically too — drift toward random Y target
+                    targetVelY = (_wanderY - _catY) * 2;
                     break;
                 case FSMState.WalkRight:
                     targetVelX = speed;
+                    targetVelY = (_wanderY - _catY) * 2;
+                    break;
+                case FSMState.WalkForward:
+                    // Walk toward viewer — mostly vertical drift
+                    targetVelY = speed * 0.5;
+                    targetVelX = (_wanderX - _catX) * 1.5;
                     break;
                 case FSMState.RunVar1:
+                    targetVelX = -speed * 1.8;
+                    targetVelY = (_wanderY - _catY) * 3;
+                    break;
                 case FSMState.RunVar2:
-                    targetVelX = (_fsm.CurrentState == FSMState.RunVar1 ? -1 : 1) * speed * 1.8;
+                    targetVelX = speed * 1.8;
+                    targetVelY = (_wanderY - _catY) * 3;
+                    break;
+                case FSMState.JumpVar1:
+                case FSMState.JumpVar2:
+                    // Jump — arc movement (up then down)
+                    _jumpTimer += dt;
+                    double jumpProgress = Math.Min(1, _jumpTimer / 800); // 800ms jump
+                    double jumpArc = Math.Sin(jumpProgress * Math.PI) * 150; // 150px peak
+                    targetVelY = -jumpArc * 5; // upward force during jump
+                    if (_fsm.CurrentState == FSMState.JumpVar1)
+                        targetVelX = -speed * 0.5;
+                    else
+                        targetVelX = speed * 0.5;
                     break;
                 case FSMState.Drag:
                     // Cat follows cursor with elastic lag
                     targetVelX = (_lastMouseX - _catX - _spriteDisplaySize / 2) * 8;
                     targetVelY = (_lastMouseY - _catY - _spriteDisplaySize / 2) * 8;
+                    break;
+                case FSMState.Fall:
+                    // Gravity pulls down after drag release
+                    targetVelX = _catVelX * 0.98; // air resistance
+                    targetVelY = _catVelY + 500 * dt / 1000; // gravity accel
                     break;
                 default:
                     targetVelX = 0;
@@ -339,6 +384,7 @@ namespace MochiV2
                 _catVelX = 0;
                 if (_fsm.CurrentState == FSMState.WalkLeft)
                     _fsm.TransitionTo(FSMState.WalkRight);
+                _wanderY = _screenHeight * 0.3 + _rng.NextDouble() * _screenHeight * 0.5;
             }
             if (_catX > _screenWidth - _spriteDisplaySize)
             {
@@ -346,14 +392,33 @@ namespace MochiV2
                 _catVelX = 0;
                 if (_fsm.CurrentState == FSMState.WalkRight)
                     _fsm.TransitionTo(FSMState.WalkLeft);
+                _wanderY = _screenHeight * 0.3 + _rng.NextDouble() * _screenHeight * 0.5;
             }
 
-            // Y clamp (cat stays near bottom unless dragging)
-            if (_fsm.CurrentState != FSMState.Drag && _fsm.CurrentState != FSMState.Fall)
+            // Y bounds — cat can roam vertically but not off screen
+            double minY = 50; // top margin
+            double maxY = _screenHeight - _spriteDisplaySize - 60; // bottom (above taskbar)
+            if (_catY < minY)
             {
-                double groundY = _screenHeight - _spriteDisplaySize - 60;
-                if (_catY > groundY) { _catY = groundY; _catVelY = 0; }
-                if (_catY < 0) { _catY = 0; _catVelY = 0; }
+                _catY = minY;
+                _catVelY = 0;
+                // Pick new wander Y downward
+                _wanderY = maxY * 0.5 + _rng.NextDouble() * maxY * 0.5;
+            }
+            if (_catY > maxY)
+            {
+                _catY = maxY;
+                _catVelY = 0;
+                // Pick new wander Y upward
+                _wanderY = minY + _rng.NextDouble() * maxY * 0.4;
+            }
+
+            // Periodically pick new wander target for natural roaming
+            _wanderRetargetTimer += dt;
+            if (_wanderRetargetTimer >= 3000) // every 3s pick new Y target
+            {
+                _wanderY = minY + _rng.NextDouble() * (maxY - minY);
+                _wanderRetargetTimer = 0;
             }
         }
 
