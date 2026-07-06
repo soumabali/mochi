@@ -26,9 +26,14 @@
   <!-- Core / Infrastructure / UI source files live as siblings of App/
        per DESIGN §4.1. Link them into this project's compilation. -->
   <ItemGroup>
-    <Compile Include="..\Core\**\*.cs" Link="Core\%(RecursiveDir)%(FileName)%(Extension)" />
-    <Compile Include="..\Infrastructure\**\*.cs" Link="Infrastructure\%(RecursiveDir)%(FileName)%(Extension)" />
-    <Compile Include="..\UI\**\*.cs" Link="UI\%(RecursiveDir)%(FileName)%(Extension)" />
+  <Compile Include="..\Core\**\*.cs" Link="Core\%(RecursiveDir)%(FileName)%(Extension)" />
+  <Compile Include="..\Infrastructure\**\*.cs" Link="Infrastructure\%(RecursiveDir)%(FileName)%(Extension)" />
+  <Compile Include="..\UI\**\*.cs" Link="UI\%(RecursiveDir)%(FileName)%(Extension)" />
+  <!-- T-018: Settings window XAML lives under sibling UI\Settings\.
+       WPF SDK auto-glob only covers the project directory, so link the
+       page explicitly; its code-behind is already pulled in by the
+       ..\UI\**\*.cs Compile glob above. -->
+  <Page Include="..\UI\Settings\SettingsWindow.xaml" Link="UI\Settings\SettingsWindow.xaml" />
   </ItemGroup>
 
   <!-- manifest.json copied to output for runtime loading -->
@@ -48,6 +53,7 @@
     <PackageReference Include="Serilog.Sinks.File" Version="6.0.0" />
     <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="9.0.0" />
     <PackageReference Include="NAudio" Version="2.2.1" />
+    <PackageReference Include="H.NotifyIcon.Wpf" Version="2.2.0" />
     </ItemGroup>
 
   <ItemGroup>
