@@ -50,17 +50,8 @@ namespace MochiV2.UI.Overlay
                     if (_cachedBitmap == null || _cachedFramePath != framePath)
                     {
                         _cachedBitmap?.Dispose();
-                        // Decode with explicit RGBA8888 color type to preserve alpha
-                        using var codec = SKCodec.Create(framePath);
-                        if (codec != null)
-                        {
-                            var info = new SKImageInfo(codec.Info.Width, codec.Info.Height, SKColorType.Rgba8888, SKAlphaType.Premul);
-                            _cachedBitmap = SKBitmap.Decode(codec, info);
-                        }
-                        else
-                        {
-                            _cachedBitmap = SKBitmap.Decode(framePath);
-                        }
+                        // PNG sprites already have proper alpha — simple decode
+                        _cachedBitmap = SKBitmap.Decode(framePath);
                         _cachedFramePath = framePath;
                     }
 

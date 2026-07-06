@@ -60,7 +60,7 @@ namespace MochiV2
         // Cat position + movement
         private double _catX, _catY;
         private double _catVelX, _catVelY;
-        private float _displayScale = 2.5f; // 128px * 2.5 = 320px display
+        private float _displayScale = 1.5f; // native ~200px * 1.5 = 300px display
         private double _screenWidth, _screenHeight;
         private double _spriteDisplaySize;
 
@@ -139,7 +139,7 @@ namespace MochiV2
                 // 6. Init position
                 _screenWidth = SystemParameters.PrimaryScreenWidth;
                 _screenHeight = SystemParameters.PrimaryScreenHeight;
-                _spriteDisplaySize = 128 * _displayScale;
+                _spriteDisplaySize = 200 * _displayScale; // ~300px
                 _catX = _screenWidth / 2 - _spriteDisplaySize / 2;
                 _catY = _screenHeight - _spriteDisplaySize - 60;
                 _catVelX = 0;
