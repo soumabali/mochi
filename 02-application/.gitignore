@@ -30,10 +30,8 @@ logs/
 !04-data/backups/.gitkeep
 !04-data/backups/README.md
 
-# Assets (symlinked from workspace, too large for git)
+# Assets — optimized WebP sprites + sounds are committed for CI bundling
 Assets/Sprite
-Assets/Sound
-Assets/Sprite_optimized
 
 # .NET build artifacts
 [Bb]in/
