@@ -76,7 +76,9 @@ namespace MochiV2
 
         // Behavior
         private Random _rng = new Random();
-        private double _nextBehaviorInterval = 5000;
+        private double _nextBehaviorInterval = 2000; // start quick
+        private double _walkTimer; // how long cat has been walking
+        private double _walkDuration; // how long to walk before stopping
 
         protected override void OnStartup(StartupEventArgs e)
         {
@@ -219,13 +221,45 @@ namespace MochiV2
             // 5. Mood
             _moodResolver?.Tick();
 
-            // 6. Behavior planning (randomized interval when idle)
+            // 6. Behavior planning — cat always does something, never stays idle long
             _behaviorTimer += dt;
-            if (_behaviorTimer >= _nextBehaviorInterval && _fsm?.CurrentState == FSMState.Idle)
+            
+            // Track walking time — stop walking after walk duration expires
+            if (_fsm?.CurrentState == FSMState.WalkLeft || _fsm?.CurrentState == FSMState.WalkRight ||
+                _fsm?.CurrentState == FSMState.RunVar1 || _fsm?.CurrentState == FSMState.RunVar2 ||
+                _fsm?.CurrentState == FSMState.WalkForward)
+            {
+                _walkTimer += dt;
+                if (_walkTimer >= _walkDuration)
+                {
+                    // Stop walking → return to Idle
+                    try { _fsm.TransitionTo(FSMState.Idle); } catch { }
+                    _walkTimer = 0;
+                    _behaviorTimer = 0;
+                    _nextBehaviorInterval = 500 + _rng.NextDouble() * 1500; // brief pause 0.5-2s
+                }
+            }
+            else if (_behaviorTimer >= _nextBehaviorInterval)
             {
                 PlanNextBehavior();
                 _behaviorTimer = 0;
-                _nextBehaviorInterval = 4000 + _rng.NextDouble() * 6000; // 4-10s
+                // If we chose to walk, set how long to walk
+                if (_fsm?.CurrentState == FSMState.WalkLeft || _fsm?.CurrentState == FSMState.WalkRight ||
+                    _fsm?.CurrentState == FSMState.WalkForward)
+                {
+                    _walkDuration = 3000 + _rng.NextDouble() * 5000; // walk 3-8s
+                    _walkTimer = 0;
+                }
+                else if (_fsm?.CurrentState == FSMState.RunVar1 || _fsm?.CurrentState == FSMState.RunVar2)
+                {
+                    _walkDuration = 2000 + _rng.NextDouble() * 3000; // run 2-5s
+                    _walkTimer = 0;
+                }
+                else
+                {
+                    // playOnce states (blink, scratch, meow, jump) — auto-return Idle
+                    _nextBehaviorInterval = 500 + _rng.NextDouble() * 1500; // 0.5-2s after
+                }
             }
 
             // 7. Night mode
@@ -330,21 +364,21 @@ namespace MochiV2
         {
             if (_fsm == null) return;
 
-            // Diverse behaviors: walk, blink, scratch, meow, jump, idle
+            // Diverse behaviors — walk dominates so cat always moves
             var behaviors = new (FSMState state, double weight)[]
             {
-                (FSMState.WalkLeft, 2.0),
-                (FSMState.WalkRight, 2.0),
-                (FSMState.Blink, 3.0),
+                (FSMState.WalkLeft, 5.0),
+                (FSMState.WalkRight, 5.0),
+                (FSMState.Blink, 2.0),
                 (FSMState.ScratchLeft, 1.0),
                 (FSMState.ScratchRight, 1.0),
-                (FSMState.MeowLeft, 0.5),
-                (FSMState.MeowRight, 0.5),
-                (FSMState.JumpVar1, 0.3),
-                (FSMState.JumpVar2, 0.3),
-                (FSMState.WalkForward, 0.5),
-                (FSMState.RunVar1, 0.2),
-                (FSMState.RunVar2, 0.2),
+                (FSMState.MeowLeft, 0.8),
+                (FSMState.MeowRight, 0.8),
+                (FSMState.JumpVar1, 0.5),
+                (FSMState.JumpVar2, 0.5),
+                (FSMState.RunVar1, 0.8),
+                (FSMState.RunVar2, 0.8),
+                (FSMState.WalkForward, 1.5),
             };
 
             double totalWeight = 0;
