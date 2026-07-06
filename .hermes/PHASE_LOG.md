@@ -46,3 +46,8 @@ Events: `enter`, `gate-review`, `progress-report`, `close`.
 - verdict: report
 - by: Hermes (Ame)
 - notes: M3 partial complete. T-009 (interaction), T-010 (physics), T-011 (particles) committed and build green. T-012 (audio) dispatched, awaiting result. 52 core tests still pass.
+
+## 2026-07-06T10:15:00+08:00 | phase 4 BUILD | progress-report
+- verdict: report
+- by: Hermes (Ame)
+- notes: M3 COMPLETE. T-009..T-012 all committed, build green (0 errors, 0 warnings). 52 core tests pass. Starting M4 (T-013..T-016).
