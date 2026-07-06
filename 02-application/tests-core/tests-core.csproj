@@ -8,7 +8,7 @@
     <IsTestProject>true</IsTestProject>
     <RootNamespace>MochiV2.Tests.Core</RootNamespace>
     <AssemblyName>MochiV2.Tests.Core</AssemblyName>
-    <!-- Non-Windows test project: runs on Linux for Core-only tests
+    <!-- Non-Windows test project: runs Linux Core-only tests
          that don't depend on WPF. -->
   </PropertyGroup>
 
@@ -26,6 +26,14 @@
     <Compile Include="..\Core\Animation\*.cs" Link="Core\Animation\%(FileName)%(Extension)" />
     <Compile Include="..\Core\Behavior\*.cs" Link="Core\Behavior\%(FileName)%(Extension)" />
     <Compile Include="..\Core\Events\*.cs" Link="Core\Events\%(FileName)%(Extension)" />
+    <!-- Selectively include Services that have no WPF/Particles dependency -->
+    <Compile Include="..\Core\Services\MoodResolver.cs" Link="Core\Services\%(FileName)%(Extension)" />
+    <Compile Include="..\Core\Services\NeedsTicker.cs" Link="Core\Services\%(FileName)%(Extension)" />
+  </ItemGroup>
+
+  <!-- Infrastructure: SaveManager (no WPF dependency) -->
+  <ItemGroup>
+    <Compile Include="..\Infrastructure\Storage\*.cs" Link="Infrastructure\Storage\%(FileName)%(Extension)" />
   </ItemGroup>
 
 </Project>

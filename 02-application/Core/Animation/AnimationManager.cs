@@ -69,7 +69,7 @@ namespace MochiV2.Core.Animation
 
             string folder = entry?.Folder ?? string.Empty;
             SpriteMode mode = entry?.Mode ?? SpriteMode.HoldFirstFrame;
-            double speed = entry?.SpeedMultiplier != 0 ? entry!.SpeedMultiplier : 1.0;
+            double speed = entry?.SpeedMultiplier ?? 1.0;
 
             string folderPath = Path.Combine(assetsBasePath, folder);
             List<string> frames = _loader.EnumerateFrames(folderPath, stateName);
