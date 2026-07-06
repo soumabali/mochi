@@ -32,8 +32,9 @@ namespace MochiV2.Core.Behavior
             // Sleeping yawn→hold is playOnceThenHoldLast; it still needs a terminal
             // exit (e.g. wake). Treat as playOnce for dead-end checking.
             FSMState.Sleeping,
-            // Drag is interrupt-only but treated as non-terminal until released.
-            // We do NOT add Drag here — its terminal path is via RestoreFromInterrupt.
+            //Drag interrupt-only treated non-terminal until released.
+            //NOT add Drag terminal path RestoreFromInterrupt.
+            FSMState.ClimbUp,
         };
 
         private readonly Dictionary<(FSMState From, string Trigger), FSMState> _transitions;

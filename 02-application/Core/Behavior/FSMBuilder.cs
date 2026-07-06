@@ -67,7 +67,8 @@ namespace MochiV2.Core.Behavior
             b.AddTransition(FSMState.Idle, "scratch_left",   FSMState.ScratchLeft);
             b.AddTransition(FSMState.Idle, "scratch_right",  FSMState.ScratchRight);
             b.AddTransition(FSMState.Idle, "meow_left",      FSMState.MeowLeft);
-            b.AddTransition(FSMState.Idle, "meow_right",     FSMState.MeowRight);
+            b.AddTransition(FSMState.Idle, "meow_right", FSMState.MeowRight);
+            b.AddTransition(FSMState.Idle, "climb_up", FSMState.ClimbUp);
             b.AddTransition(FSMState.Idle, "blink",          FSMState.Blink);
             b.AddTransition(FSMState.Idle, "eat",            FSMState.Eating);
             b.AddTransition(FSMState.Idle, "wake_up",        FSMState.WakeUp);
@@ -94,7 +95,11 @@ namespace MochiV2.Core.Behavior
             b.AddTransition(FSMState.HungryCritical,   "fed", FSMState.Eating);
             b.AddTransition(FSMState.HungryStandard,  "done", FSMState.Idle);
             b.AddTransition(FSMState.HungryCritical,   "done", FSMState.Idle);
-            b.AddTransition(FSMState.Eating,           "done", FSMState.Idle);
+            b.AddTransition(FSMState.Eating, "done", FSMState.Idle);
+
+            //--- ClimbUp: playOnce, done → Idle (on surface) ---
+            b.AddTransition(FSMState.ClimbUp, "done", FSMState.Idle);
+            b.AddTransition(FSMState.ClimbUp, "surface_gone", FSMState.Fall);
 
             // --- Playful: loop, stop → Idle ---
             b.AddTransition(FSMState.Playful, "stop", FSMState.Idle);

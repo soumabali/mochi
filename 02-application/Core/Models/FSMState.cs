@@ -74,7 +74,10 @@ namespace MochiV2.Core.Models
         /// <summary>Wake up — reversed yawn (playOnceReversed).</summary>
         WakeUp,
 
-        /// <summary>Eating after being fed (loop, speedMultiplier 1.3).</summary>
-        Eating
-    }
-}
+        ///<summary>Eating after fed (loop, speedMultiplier1.3).</summary>
+        Eating,
+
+        /// <summary>Climb to window-top surface (playOnce, reuses JumpVar1 sprite).</summary>
+        ClimbUp
+        }
+        }

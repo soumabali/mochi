@@ -169,6 +169,10 @@ namespace MochiV2
             services.AddSingleton<MochiV2.Core.Behavior.BehaviorPlanner>();
             services.AddSingleton<MochiV2.Core.Behavior.InteractionHandler>();
 
+            //--- Surface (Post-MVP Phase E) ---------------------------------
+            services.AddSingleton<MochiV2.Core.Behavior.ISurfaceProvider, MochiV2.Infrastructure.Window.Win32SurfaceProvider>();
+            services.AddSingleton<MochiV2.Core.Behavior.SurfaceClimber>();
+
             // --- Physics ---------------------------------------------------
             services.AddSingleton<MochiV2.Core.Physics.PhysicsEngine>(sp =>
             {

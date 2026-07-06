@@ -66,26 +66,28 @@ namespace MochiV2.Core.Behavior
             FSMState.MeowRight,
             FSMState.Blink,
             FSMState.Playful,
-        };
+            FSMState.ClimbUp, // Post-MVP Phase E: surface climb
+            };
 
-        /// <summary>Trigger string for each candidate state.</summary>
-        private static readonly Dictionary<FSMState, string> StateTriggers = new()
-        {
-            { FSMState.Idle,        "stop" },          // no-op (stay idle)
-            { FSMState.WalkLeft,    "walk_left" },
-            { FSMState.WalkRight,   "walk_right" },
+            /// <summary>Trigger string for each candidate state.</summary>
+            private static readonly Dictionary<FSMState, string> StateTriggers = new()
+            {
+            { FSMState.Idle, "stop" },
+            { FSMState.WalkLeft, "walk_left" },
+            { FSMState.WalkRight, "walk_right" },
             { FSMState.WalkForward, "walk_forward" },
-            { FSMState.RunVar1,     "run_1" },
-            { FSMState.RunVar2,     "run_2" },
-            { FSMState.JumpVar1,    "jump_1" },
-            { FSMState.JumpVar2,    "jump_2" },
+            { FSMState.RunVar1, "run_1" },
+            { FSMState.RunVar2, "run_2" },
+            { FSMState.JumpVar1, "jump_1" },
+            { FSMState.JumpVar2, "jump_2" },
             { FSMState.ScratchLeft, "scratch_left" },
-            { FSMState.ScratchRight,"scratch_right" },
-            { FSMState.MeowLeft,    "meow_left" },
-            { FSMState.MeowRight,   "meow_right" },
-            { FSMState.Blink,       "blink" },
-            { FSMState.Playful,     "playful" },
-        };
+            { FSMState.ScratchRight, "scratch_right" },
+            { FSMState.MeowLeft, "meow_left" },
+            { FSMState.MeowRight, "meow_right" },
+            { FSMState.Blink, "blink" },
+            { FSMState.Playful, "playful" },
+            { FSMState.ClimbUp, "climb_up" },
+            };
 
         // ─────────────────────── Chained sequences ───────────────────────
 

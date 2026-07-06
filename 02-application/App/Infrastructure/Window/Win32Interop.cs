@@ -1,6 +1,8 @@
 using System;
+using System.Collections.Generic;
 using System.Runtime.InteropServices;
 using System.Runtime.Versioning;
+using System.Text;
 using Serilog;
 
 namespace MochiV2.Infrastructure.Window
@@ -9,21 +11,21 @@ namespace MochiV2.Infrastructure.Window
     /// Win32 P/Invoke declarations and high-level wrapper methods for the
     /// transparent overlay window (T-002).
     ///
-    /// All P/Invoke signatures match the Windows SDK (WinUser.h, WinDef.h).
-    /// Declarations are compiled inside <c>#if WINDOWS</c> so the
+    /// All P/Invoke signatures match Windows SDK (WinUser.h, WinDef.h).
+    /// Declarations compiled inside <c>#if WINDOWS</c>; the
     /// <c>net9.0-windows</c> TFM includes them on every build host; runtime
-    /// calls are guarded by <see cref="OperatingSystem.IsWindows"/> so that
-    /// unit tests and Linux builds never execute native code.
+    /// calls guarded by <see cref="OperatingSystem.IsWindows"/>() so that
+    /// unit tests on Linux builds execute non-native code paths.
     /// </summary>
     public static class Win32Interop
     {
         private static readonly Serilog.ILogger Logger =
             Log.ForContext(typeof(Win32Interop));
 
-        // ------------------------------------------------------------------
-        //  Extended window-style constants  ( WinUser.h )
-        //  Values match PRD §9 / DESIGN §2 Window States.
-        // ------------------------------------------------------------------
+        //------------------------------------------------------------------
+        // Extended window-style constants (WinUser.h)
+        // Values match PRD §9 / DESIGN §2 Window States.
+        //------------------------------------------------------------------
 
         /// <summary>Layered window — required for per-pixel alpha / transparency.</summary>
         public const int WS_EX_LAYERED = 0x00080000;
@@ -31,31 +33,31 @@ namespace MochiV2.Infrastructure.Window
         /// <summary>Window does not receive mouse input (click-through).</summary>
         public const int WS_EX_TRANSPARENT = 0x00000020;
 
-        /// <summary>Tool window — hidden from Alt-Tab and the taskbar.</summary>
+        /// <summary>Tool window — hidden from Alt-Tab and taskbar.</summary>
         public const int WS_EX_TOOLWINDOW = 0x00000080;
 
-        /// <summary>Window cannot be activated by a click or Alt-Tab.</summary>
+        /// <summary>Window cannot be activated by click or Alt-Tab.</summary>
         public const int WS_EX_NOACTIVATE = 0x08000000;
 
-        /// <summary>Force a top-level taskbar button (removed for overlay).</summary>
+        /// <summary>Force top-level taskbar button (removed for overlay).</summary>
         public const int WS_EX_APPWINDOW = 0x00040000;
 
         /// <summary>Offset to retrieve/set extended window styles via Get/SetWindowLong.</summary>
         public const int GWL_EXSTYLE = -20;
 
-        // ------------------------------------------------------------------
-        //  SetWindowPos HWND special handles  ( WinUser.h )
-        // ------------------------------------------------------------------
+        //------------------------------------------------------------------
+        // SetWindowPos HWND special handles (WinUser.h)
+        //------------------------------------------------------------------
 
-        /// <summary>Places the window above all non-topmost windows.</summary>
-        public static readonly IntPtr HWND_TOPMOST = new IntPtr(-1);
+        /// <summary>Places window above all non-topmost windows.</summary>
+        public static readonly IntPtr HWND_TOPMOST = new(-1);
 
-        /// <summary>Places the window above all windows (including topmost).</summary>
-        public static readonly IntPtr HWND_TOP = new IntPtr(0);
+        /// <summary>Places window above all windows (including topmost).</summary>
+        public static readonly IntPtr HWND_TOP = new(0);
 
-        // ------------------------------------------------------------------
-        //  SetWindowPos flags  ( WinUser.h )
-        // ------------------------------------------------------------------
+        //------------------------------------------------------------------
+        // SetWindowPos flags (WinUser.h)
+        //------------------------------------------------------------------
 
         public const uint SWP_NOSIZE = 0x0001;
         public const uint SWP_NOMOVE = 0x0002;
@@ -63,9 +65,9 @@ namespace MochiV2.Infrastructure.Window
         public const uint SWP_SHOWWINDOW = 0x0040;
         public const uint SWP_HIDEWINDOW = 0x0080;
 
-        // ------------------------------------------------------------------
-        //  Monitor-from-window flags  ( WinUser.h )
-        // ------------------------------------------------------------------
+        //------------------------------------------------------------------
+        // Monitor-from-window flags (WinUser.h)
+        //------------------------------------------------------------------
 
         /// <summary>Return primary monitor if window doesn't intersect any.</summary>
         public const uint MONITOR_DEFAULTTOPRIMARY = 0x00000001;
@@ -73,12 +75,11 @@ namespace MochiV2.Infrastructure.Window
         /// <summary>Return nearest monitor if window doesn't intersect any.</summary>
         public const uint MONITOR_DEFAULTTONEAREST = 0x00000002;
 
-        // ==================================================================
-        //  P/Invoke declarations  (compiled on WINDOWS TFM)
-        // ==================================================================
-#if WINDOWS
-        // --- GetWindowLong / SetWindowLong -------------------------------
-        //  Use IntPtr-based overloads so the same code works on 32/64-bit.
+        //==================================================================
+        // P/Invoke declarations (compiled on WINDOWS TFM)
+        //==================================================================
+
+        //--- GetWindowLong / SetWindowLong -------------------------------
         [DllImport("user32.dll", SetLastError = true)]
         [SupportedOSPlatform("windows")]
         private static extern IntPtr GetWindowLongPtr(IntPtr hWnd, int nIndex);
@@ -87,47 +88,78 @@ namespace MochiV2.Infrastructure.Window
         [SupportedOSPlatform("windows")]
         private static extern IntPtr SetWindowLongPtr(IntPtr hWnd, int nIndex, IntPtr dwNewLong);
 
-        // --- SetWindowPos ------------------------------------------------
+        //--- SetWindowPos ------------------------------------------------
         [DllImport("user32.dll", SetLastError = true)]
         [SupportedOSPlatform("windows")]
         [return: MarshalAs(UnmanagedType.Bool)]
         private static extern bool SetWindowPos(IntPtr hWnd, IntPtr hWndInsertAfter,
             int X, int Y, int cx, int cy, uint uFlags);
 
-        // --- GetCursorPos ------------------------------------------------
+        //--- GetCursorPos ------------------------------------------------
         [DllImport("user32.dll", SetLastError = true)]
         [SupportedOSPlatform("windows")]
         [return: MarshalAs(UnmanagedType.Bool)]
         private static extern bool GetCursorPos(out POINT lpPoint);
 
-        // --- GetForegroundWindow -----------------------------------------
+        //--- GetForegroundWindow -----------------------------------------
         [DllImport("user32.dll", SetLastError = true)]
         [SupportedOSPlatform("windows")]
         private static extern IntPtr GetForegroundWindow();
 
-        // --- GetWindowRect -----------------------------------------------
+        //--- GetWindowRect -----------------------------------------------
         [DllImport("user32.dll", SetLastError = true)]
         [SupportedOSPlatform("windows")]
         [return: MarshalAs(UnmanagedType.Bool)]
         private static extern bool GetWindowRect(IntPtr hWnd, out RECT lpRect);
 
-        // --- MonitorFromWindow -------------------------------------------
+        //--- MonitorFromWindow -------------------------------------------
         [DllImport("user32.dll", SetLastError = true)]
         [SupportedOSPlatform("windows")]
         private static extern IntPtr MonitorFromWindow(IntPtr hwnd, uint dwFlags);
 
-        // --- GetMonitorInfo ----------------------------------------------
+        //--- GetMonitorInfo ----------------------------------------------
         [DllImport("user32.dll", SetLastError = true)]
         [SupportedOSPlatform("windows")]
         [return: MarshalAs(UnmanagedType.Bool)]
         private static extern bool GetMonitorInfo(IntPtr hMonitor, ref MONITORINFO lpmi);
 
-        // --- GetDpiForWindow  (PerMonitorV2, Windows 10 1607+) -----------
+        //--- GetDpiForWindow (PerMonitorV2, Windows 10 1607+) ------------
         [DllImport("user32.dll", SetLastError = true)]
         [SupportedOSPlatform("windows")]
         private static extern uint GetDpiForWindowNative(IntPtr hwnd);
 
-        // --- Structs -----------------------------------------------------
+        //--- EnumWindows -------------------------------------------------
+        [DllImport("user32.dll", SetLastError = true)]
+        [SupportedOSPlatform("windows")]
+        [return: MarshalAs(UnmanagedType.Bool)]
+        private static extern bool EnumWindows(EnumWindowsProc lpEnumFunc, IntPtr lParam);
+
+        //--- IsWindowVisible ---------------------------------------------
+        [DllImport("user32.dll", SetLastError = true)]
+        [SupportedOSPlatform("windows")]
+        [return: MarshalAs(UnmanagedType.Bool)]
+        private static extern bool IsWindowVisibleNative(IntPtr hWnd);
+
+        //--- GetWindowTextLength -----------------------------------------
+        [DllImport("user32.dll", SetLastError = true)]
+        [SupportedOSPlatform("windows")]
+        private static extern int GetWindowTextLengthNative(IntPtr hWnd);
+
+        //--- GetWindowText -----------------------------------------------
+        [DllImport("user32.dll", SetLastError = true, CharSet = CharSet.Unicode)]
+        [SupportedOSPlatform("windows")]
+        private static extern int GetWindowTextNative(IntPtr hWnd, StringBuilder lpString, int nMaxCount);
+
+        //--- GetClassName ------------------------------------------------
+        [DllImport("user32.dll", SetLastError = true, CharSet = CharSet.Unicode)]
+        [SupportedOSPlatform("windows")]
+        private static extern int GetClassNameNative(IntPtr hWnd, StringBuilder lpString, int nMaxCount);
+
+        //--- EnumWindows delegate ----------------------------------------
+        [UnmanagedFunctionPointer(CallingConvention.Winapi)]
+        private delegate bool EnumWindowsProc(IntPtr hWnd, IntPtr lParam);
+
+        //--- Structs -----------------------------------------------------
         [StructLayout(LayoutKind.Sequential)]
         public struct POINT
         {
@@ -155,17 +187,14 @@ namespace MochiV2.Infrastructure.Window
             public RECT rcWork;
             public uint dwFlags;
         }
-#endif
 
-        // ==================================================================
-        //  High-level wrapper methods
-        // ==================================================================
+        //==================================================================
+        // High-level wrapper methods
+        //==================================================================
 
         /// <summary>
-        /// Reads the current extended window style flags.
+        /// Reads current extended window style flags.
         /// </summary>
-        /// <param name="hwnd">Window handle.</param>
-        /// <returns>Extended style bit-field, or 0 on non-Windows.</returns>
         [SupportedOSPlatform("windows")]
         public static int GetExtendedStyle(IntPtr hwnd)
         {
@@ -182,10 +211,8 @@ namespace MochiV2.Infrastructure.Window
         }
 
         /// <summary>
-        /// Sets the extended window style flags.
+        /// Sets extended window style flags.
         /// </summary>
-        /// <param name="hwnd">Window handle.</param>
-        /// <param name="style">New extended style bit-field.</param>
         [SupportedOSPlatform("windows")]
         public static void SetExtendedStyle(IntPtr hwnd, int style)
         {
@@ -200,13 +227,11 @@ namespace MochiV2.Infrastructure.Window
         }
 
         /// <summary>
-        /// Toggles the <see cref="WS_EX_TRANSPARENT"/> (click-through) extended
-        /// style.  When <paramref name="enabled"/> is <c>true</c> the window is
+        /// Toggles <see cref="WS_EX_TRANSPARENT"/> (click-through) extended
+        /// style. When <paramref name="enabled"/> is <c>true</c> the window is
         /// click-through (Roam state); when <c>false</c> the window receives
-        /// mouse input (Interact / Drag states).  See DESIGN §2.
+        /// mouse input (Interact / Drag states). See DESIGN §2.
         /// </summary>
-        /// <param name="hwnd">Window handle.</param>
-        /// <param name="enabled">True to enable click-through, false to disable.</param>
         [SupportedOSPlatform("windows")]
         public static void SetWindowClickThrough(IntPtr hwnd, bool enabled)
         {
@@ -229,9 +254,8 @@ namespace MochiV2.Infrastructure.Window
         /// <summary>
         /// Adds <see cref="WS_EX_TOOLWINDOW"/> and removes
         /// <see cref="WS_EX_APPWINDOW"/> so the window is hidden from the
-        /// taskbar and Alt-Tab.  See PRD §10 RA-1 / DESIGN §2.
+        /// taskbar and Alt-Tab. See PRD §10 RA-1 / DESIGN §2.
         /// </summary>
-        /// <param name="hwnd">Window handle.</param>
         [SupportedOSPlatform("windows")]
         public static void SetToolWindow(IntPtr hwnd)
         {
@@ -250,10 +274,9 @@ namespace MochiV2.Infrastructure.Window
         }
 
         /// <summary>
-        /// Adds <see cref="WS_EX_NOACTIVATE"/> so clicks do not steal focus
-        /// and the window never appears in Alt-Tab.  See DESIGN §2.
+        /// Adds <see cref="WS_EX_NOACTIVATE"/> so clicks don't steal focus
+        /// and the window doesn't appear in Alt-Tab. See DESIGN §2.
         /// </summary>
-        /// <param name="hwnd">Window handle.</param>
         [SupportedOSPlatform("windows")]
         public static void SetNoActivate(IntPtr hwnd)
         {
@@ -273,21 +296,18 @@ namespace MochiV2.Infrastructure.Window
         /// <summary>
         /// Adds or removes <c>HWND_TOPMOST</c> via <c>SetWindowPos</c>.
         /// When <paramref name="topmost"/> is <c>true</c> the window stays
-        /// above all non-topmost windows (Roam / Interact / Drag states).
-        /// When <c>false</c> the window becomes non-topmost.
+        /// above all non-topmost windows.
         /// </summary>
-        /// <param name="hwnd">Window handle.</param>
-        /// <param name="topmost">True for topmost, false for not-topmost.</param>
         [SupportedOSPlatform("windows")]
         public static void SetTopMost(IntPtr hwnd, bool topmost)
         {
             if (!OperatingSystem.IsWindows())
             {
-                Logger.Debug("SetTopMost({Topmost}) skipped (non-Windows).", topmost);
+                Logger.Debug("SetTopMost skipped (non-Windows).");
                 return;
             }
 #if WINDOWS
-            IntPtr after = topmost ? HWND_TOPMOST : new IntPtr(-2); // HWND_NOTOPMOST
+            var after = topmost ? HWND_TOPMOST : HWND_TOP;
             SetWindowPos(hwnd, after, 0, 0, 0, 0,
                 SWP_NOMOVE | SWP_NOSIZE | SWP_NOACTIVATE);
             Logger.Debug("TopMost {State} HWND {Hwnd}.", topmost ? "ON" : "OFF", hwnd);
@@ -295,10 +315,8 @@ namespace MochiV2.Infrastructure.Window
         }
 
         /// <summary>
-        /// Retrieves the cursor position in screen coordinates.
+        /// Retrieves cursor position in screen coordinates.
         /// </summary>
-        /// <param name="point">Receives the cursor position.</param>
-        /// <returns><c>true</c> on success; <c>false</c> on non-Windows or failure.</returns>
         [SupportedOSPlatform("windows")]
         public static bool TryGetCursorPos(out (int X, int Y) point)
         {
@@ -320,8 +338,8 @@ namespace MochiV2.Infrastructure.Window
         }
 
         /// <summary>
-        /// Returns the foreground window handle, or <see cref="IntPtr.Zero"/>
-        /// on non-Windows.
+        /// Returns foreground window handle, <see cref="IntPtr.Zero"/> on
+        /// non-Windows.
         /// </summary>
         [SupportedOSPlatform("windows")]
         public static IntPtr GetForegroundHwnd()
@@ -336,11 +354,8 @@ namespace MochiV2.Infrastructure.Window
         }
 
         /// <summary>
-        /// Retrieves the bounding rectangle of <paramref name="hwnd"/>.
+        /// Retrieves bounding rectangle of <paramref name="hwnd"/>.
         /// </summary>
-        /// <param name="hwnd">Window handle.</param>
-        /// <param name="rect">Receives (left, top, right, bottom).</param>
-        /// <returns><c>true</c> on success.</returns>
         [SupportedOSPlatform("windows")]
         public static bool TryGetWindowRect(IntPtr hwnd, out (int Left, int Top, int Right, int Bottom) rect)
         {
@@ -360,11 +375,9 @@ namespace MochiV2.Infrastructure.Window
         }
 
         /// <summary>
-        /// Returns the handle of the monitor that the given window is on
-        /// (nearest monitor if no intersection).
+        /// Returns handle of the monitor the given window is on
+        /// (nearest monitor with intersection).
         /// </summary>
-        /// <param name="hwnd">Window handle.</param>
-        /// <returns>Monitor handle, or <see cref="IntPtr.Zero"/> on non-Windows.</returns>
         [SupportedOSPlatform("windows")]
         public static IntPtr GetMonitorFromWindow(IntPtr hwnd)
         {
@@ -378,12 +391,9 @@ namespace MochiV2.Infrastructure.Window
         }
 
         /// <summary>
-        /// Retrieves the full monitor rectangle for the monitor that
+        /// Retrieves full monitor rectangle of the monitor that
         /// <paramref name="hwnd"/> is on.
         /// </summary>
-        /// <param name="hwnd">Window handle.</param>
-        /// <param name="rect">Receives (left, top, right, bottom).</param>
-        /// <returns><c>true</c> on success.</returns>
         [SupportedOSPlatform("windows")]
         public static bool TryGetMonitorRect(IntPtr hwnd, out (int Left, int Top, int Right, int Bottom) rect)
         {
@@ -392,14 +402,80 @@ namespace MochiV2.Infrastructure.Window
                 return false;
 #if WINDOWS
             IntPtr hMon = MonitorFromWindow(hwnd, MONITOR_DEFAULTTONEAREST);
-            MONITORINFO mi = new MONITORINFO { cbSize = System.Runtime.InteropServices.Marshal.SizeOf<MONITORINFO>() };
+            MONITORINFO mi = new MONITORINFO { cbSize = Marshal.SizeOf<MONITORINFO>() };
             if (GetMonitorInfo(hMon, ref mi))
             {
                 rect = (mi.rcMonitor.Left, mi.rcMonitor.Top,
-                        mi.rcMonitor.Right, mi.rcMonitor.Bottom);
+                    mi.rcMonitor.Right, mi.rcMonitor.Bottom);
                 return true;
             }
             return false;
+#else
+            return false;
+#endif
+        }
+
+        /// <summary>
+        /// Enumerates visible top-level windows with title bars suitable for
+        /// surface walking. Returns (hwnd, left, top, right, bottom) tuples.
+        /// Filters: visible, has title, width &gt; 50px. Returns empty on non-Windows.
+        /// </summary>
+        [SupportedOSPlatform("windows")]
+        public static List<(IntPtr Hwnd, int Left, int Top, int Right, int Bottom)> EnumerateVisibleWindows()
+        {
+            var result = new List<(IntPtr, int, int, int, int)>();
+
+            if (!OperatingSystem.IsWindows())
+            {
+                Logger.Debug("EnumerateVisibleWindows skipped (non-Windows).");
+                return result;
+            }
+
+#if WINDOWS
+            var hwnds = new List<IntPtr>();
+            EnumWindowsProc callback = (hWnd, _) =>
+            {
+                hwnds.Add(hWnd);
+                return true;
+            };
+            EnumWindows(callback, IntPtr.Zero);
+
+            foreach (var hWnd in hwnds)
+            {
+                if (!IsWindowVisibleNative(hWnd))
+                    continue;
+
+                if (GetWindowTextLengthNative(hWnd) <= 0)
+                    continue;
+
+                if (!GetWindowRect(hWnd, out RECT r))
+                    continue;
+
+                if (r.Right - r.Left <= 50)
+                    continue;
+
+                int exStyle = unchecked((int)GetWindowLongPtr(hWnd, GWL_EXSTYLE));
+                if ((exStyle & WS_EX_TOOLWINDOW) != 0 && (exStyle & WS_EX_LAYERED) != 0)
+                    continue;
+
+                result.Add((hWnd, r.Left, r.Top, r.Right, r.Bottom));
+            }
+
+            Logger.Debug("EnumerateVisibleWindows: {Count} surfaces found.", result.Count);
+#endif
+            return result;
+        }
+
+        /// <summary>
+        /// Checks if a window handle is still valid and visible.
+        /// </summary>
+        [SupportedOSPlatform("windows")]
+        public static bool IsWindowStillValid(IntPtr hWnd)
+        {
+            if (!OperatingSystem.IsWindows())
+                return false;
+#if WINDOWS
+            return IsWindowVisibleNative(hWnd);
 #else
             return false;
 #endif

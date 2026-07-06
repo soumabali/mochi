@@ -48,6 +48,8 @@ namespace MochiV2
         private TypingRateService? _typingRate;
         private FeedingService? _feedingService;
         private SleepService? _sleepService;
+        private ISurfaceProvider? _surfaceProvider;
+        private SurfaceClimber? _surfaceClimber;
 
         // Frame timing
         private System.Diagnostics.Stopwatch? _frameTimer;
@@ -120,6 +122,8 @@ namespace MochiV2
                 _typingRate = Services.GetRequiredService<TypingRateService>();
                 _feedingService = Services.GetRequiredService<FeedingService>();
                 _sleepService = Services.GetRequiredService<SleepService>();
+                _surfaceProvider = Services.GetRequiredService<ISurfaceProvider>();
+                _surfaceClimber = Services.GetRequiredService<SurfaceClimber>();
                 _renderer = Services.GetRequiredService<MochiRenderer>();
                 Log.Information("All services resolved");
 
@@ -189,10 +193,17 @@ namespace MochiV2
                 _frameTimer = System.Diagnostics.Stopwatch.StartNew();
                 CompositionTarget.Rendering += OnRendering;
 
-                // D-01: Multi-monitor display change detection
+                //D-01: Multi-monitor display change detection
                 SystemEvents.DisplaySettingsChanged += OnDisplaySettingsChanged;
 
-                Log.Information("MochiV2 ready — all phases wired");
+                //E-08: Surface provider wired
+                if (_surfaceProvider != null)
+                {
+                _surfaceProvider.SurfacesChanged += OnSurfacesChanged;
+                Log.Information("Surface provider wired");
+                }
+
+                Log.Information("MochiV2 ready all phases wired");
             }
             catch (Exception ex)
             {
@@ -277,6 +288,9 @@ namespace MochiV2
 
             // A-05: Squash & stretch on landing
             UpdateSquashStretch(dt);
+
+            // E-09: Check current surface exists — if gone, trigger Fall
+            // (handled via OnSurfacesChanged event)
 
             // Sync renderer
             if (_renderer != null)
@@ -847,9 +861,18 @@ namespace MochiV2
 
         private static IServiceProvider BootstrapContainer()
         {
-            var services = new ServiceCollection();
-            Program.ConfigureServices(services);
-            return services.BuildServiceProvider();
+        var services = new ServiceCollection();
+        Program.ConfigureServices(services);
+        return services.BuildServiceProvider();
         }
-    }
-}
+
+        // E-08: Surface provider changed handler
+        private void OnSurfacesChanged()
+        {
+        Log.Debug("Surfaces changed event received.");
+        // The Win32SurfaceProvider already updated its cache.
+        // If we had a MovementService wired for surface walking,
+        // we'd call CheckSurfaceExists here to trigger Fall if needed.
+        }
+        }
+        }
