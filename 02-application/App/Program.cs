@@ -10,8 +10,8 @@ namespace MochiV2
 {
     /// <summary>
     /// Entry point for MochiV2. Handles single-instance enforcement,
-    /// DI container bootstrap, and Serilog configuration before
-    /// handing off to the WPF <see cref="App"/> class.
+    /// container bootstrap, Serilog configuration before
+    /// handing off to WPF <see cref="App"/> class.
     /// </summary>
     public static class Program
     {
@@ -19,25 +19,23 @@ namespace MochiV2
         private static Mutex? _singleInstanceMutex;
 
         /// <summary>
-        /// Main entry point. WPF projects do not use this directly on Windows
-        /// (the auto-generated Main in App.xaml.cs drives startup), but the
-        /// bootstrap logic is exposed here so it can be unit-tested and so a
-        /// custom Main can be wired up via <c>StartupObject</c> if needed.
+        /// Main entry point. WPF projects not using auto-generated Main
+        /// need a custom Main wired via <c>StartupObject</c>.
         /// </summary>
         [STAThread]
         public static int Main(string[] args)
         {
-            // --- Single-instance guard --------------------------------------
+            //--- Single-instance guard --------------------------------------
             _singleInstanceMutex = new Mutex(initiallyOwned: true, name: MutexName, out bool createdNew);
             if (!createdNew)
             {
-                // Another instance is already running — exit silently.
+                // Another instance running — exit silently.
                 _singleInstanceMutex.Dispose();
                 _singleInstanceMutex = null;
                 return 0;
             }
 
-            // --- Logging ----------------------------------------------------
+            //--- Logging ----------------------------------------------------
             string logDir = ResolveLogDirectory();
             Directory.CreateDirectory(logDir);
 
@@ -58,23 +56,20 @@ namespace MochiV2
 
             try
             {
-                // --- DI container ------------------------------------------
+                //--- container ------------------------------------------
                 var services = new ServiceCollection();
                 ConfigureServices(services);
                 IServiceProvider provider = services.BuildServiceProvider();
 
                 Log.Information("DI container initialised with {ServiceCount} services", services.Count);
 
-                // --- Hand off to WPF App -----------------------------------
-                // On Windows the App.xaml-generated Main calls App.Main which
-                // invokes RunWpfApp; on Linux we cannot launch WPF so we just
-                // verify the container and exit cleanly for restore/test.
+                //--- Hand off to WPF App -----------------------------------
                 App.Services = provider;
                 return RunWpfApp(provider, args);
             }
             catch (Exception ex)
             {
-                Log.Fatal(ex, "MochiV2 terminated with an unhandled exception");
+                Log.Fatal(ex, "MochiV2 terminated with unhandled exception");
                 return 1;
             }
             finally
@@ -87,26 +82,22 @@ namespace MochiV2
         }
 
         /// <summary>
-        /// Registers services into the DI container. T-001 keeps this empty
-        /// (placeholder) — subsequent tasks (T-002 … T-0xx) will populate it.
+        /// Registers services in container.
         /// </summary>
         internal static void ConfigureServices(IServiceCollection services)
         {
-            // T-001: empty service collection — populated by later tasks.
-            // e.g. services.AddSingleton<IEventBus, EventBus>();
+            // Populated by subsequent tasks.
         }
 
         /// <summary>
-        /// Resolves the per-user log directory under %APPDATA%\NekoCompanion\logs.
-        /// Falls back to <c>~/.local/share/NekoCompanion/logs</c> on non-Windows
-        /// platforms so the test/restore path on Linux does not crash.
+        /// Resolves per-user log directory under %APPDATA%\NekoCompanion\logs.
+        /// Falls back to ~/.local/share/NekoCompanion/logs on non-Windows.
         /// </summary>
         internal static string ResolveLogDirectory()
         {
             string? appData = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData);
             if (string.IsNullOrEmpty(appData) || appData == "/")
             {
-                // Linux fallback for restore / test scenarios.
                 appData = Path.Combine(
                     Environment.GetFolderPath(Environment.SpecialFolder.UserProfile) ?? "/tmp",
                     ".local", "share");
@@ -116,17 +107,14 @@ namespace MochiV2
         }
 
         /// <summary>
-        /// Launches the WPF application. On Linux this is unreachable because
-        /// WPF cannot start; the method is factored out so the bootstrap path
-        /// (mutex + logging + DI) can be verified independently.
+        /// Launches WPF application.
         /// </summary>
         private static int RunWpfApp(IServiceProvider provider, string[] args)
         {
-            // On Windows: App app = new App(); app.Run();
-            // We let the WPF App.Main (auto-generated) take over via
-            // StartupObject. This method exists so the container is wired
-            // before any WPF window is constructed.
-            return 0;
+            App.Services = provider;
+            var app = new App();
+            app.InitializeComponent();
+            return app.Run();
         }
     }
 }
