@@ -11,7 +11,6 @@ namespace MochiV2.UI.Overlay
     /// <summary>
     /// SkiaSharp drawing surface for Mochi overlay.
     /// Renders: sprite frame + particles + micro-motion transforms.
-    /// All in one Draw() call, integrated with App render loop.
     /// </summary>
     public sealed class MochiRenderer
     {
@@ -42,10 +41,7 @@ namespace MochiV2.UI.Overlay
 
             TickFps();
 
-            // Clear transparent
-            canvas.Clear(SKColors.Transparent);
-
-            // ── 1. Draw cat sprite ─────────────────────────────────────
+            // Try to render current sprite frame
             string? framePath = AnimationManager?.ActiveController?.CurrentFramePath;
             if (!string.IsNullOrEmpty(framePath) && File.Exists(framePath))
             {
@@ -54,7 +50,17 @@ namespace MochiV2.UI.Overlay
                     if (_cachedBitmap == null || _cachedFramePath != framePath)
                     {
                         _cachedBitmap?.Dispose();
-                        _cachedBitmap = SKBitmap.Decode(framePath);
+                        // Decode with explicit RGBA8888 color type to preserve alpha
+                        using var codec = SKCodec.Create(framePath);
+                        if (codec != null)
+                        {
+                            var info = new SKImageInfo(codec.Info.Width, codec.Info.Height, SKColorType.Rgba8888, SKAlphaType.Premul);
+                            _cachedBitmap = SKBitmap.Decode(codec, info);
+                        }
+                        else
+                        {
+                            _cachedBitmap = SKBitmap.Decode(framePath);
+                        }
                         _cachedFramePath = framePath;
                     }
 
@@ -65,23 +71,19 @@ namespace MochiV2.UI.Overlay
                         float displayW = nativeW * Scale;
                         float displayH = nativeH * Scale;
 
-                        // Cat position from App
                         float x = (float)CatX;
                         float y = (float)CatY;
 
-                        // Apply micro-motion (breathing scale, fidget offset)
-                        float scaleYOffset = 0f;
-                        float scaleX = 1f;
+                        // Apply micro-motion (breathing scale)
                         float scaleY = 1f;
                         if (MicroMotion != null)
                         {
                             scaleY = (float)MicroMotion.CurrentBreathingScaleY();
                         }
 
-                        // Draw bitmap with breathing scale
                         float adjustedH = displayH * scaleY;
-                        float adjustedW = displayW * scaleX;
-                        float dy = (displayH - adjustedH) / 2f; // bottom-anchor breathing
+                        float adjustedW = displayW;
+                        float dy = (displayH - adjustedH) / 2f;
 
                         var destRect = new SKRect(x, y + dy, x + adjustedW, y + dy + adjustedH);
                         var srcRect = new SKRect(0, 0, nativeW, nativeH);
@@ -89,7 +91,8 @@ namespace MochiV2.UI.Overlay
                         using var paint = new SKPaint
                         {
                             IsAntialias = true,
-                            FilterQuality = SKFilterQuality.Medium
+                            FilterQuality = SKFilterQuality.Medium,
+                            Color = SKColors.White.WithAlpha(255) // opaque, bitmap alpha drives transparency
                         };
                         canvas.DrawBitmap(_cachedBitmap, srcRect, destRect, paint);
                     }
@@ -109,7 +112,7 @@ namespace MochiV2.UI.Overlay
                 canvas.DrawCircle(cx, cy, radius, p);
             }
 
-            // ── 2. Draw particles (hearts, Zzz, !, dust) ───────────────
+            // Draw particles
             if (Particles != null)
             {
                 Particles.Draw(canvas);

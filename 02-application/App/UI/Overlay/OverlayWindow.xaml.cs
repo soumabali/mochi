@@ -146,6 +146,7 @@ namespace MochiV2.UI.Overlay
             SKSurface surface = e.Surface;
             SKCanvas canvas = surface.Canvas;
 
+            // Clear with transparent — alpha=0 means desktop shows through
             canvas.Clear(SKColors.Transparent);
 
             SKSizeI size = e.Info.Size;
