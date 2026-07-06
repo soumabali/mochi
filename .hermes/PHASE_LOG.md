@@ -51,3 +51,8 @@ Events: `enter`, `gate-review`, `progress-report`, `close`.
 - verdict: report
 - by: Hermes (Ame)
 - notes: M3 COMPLETE. T-009..T-012 all committed, build green (0 errors, 0 warnings). 52 core tests pass. Starting M4 (T-013..T-016).
+
+## 2026-07-06T10:45:00+08:00 | phase 4 BUILD | progress-report
+- verdict: report
+- by: Hermes (Ame)
+- notes: M4 complete. M5 partial (T-017 T-018 done, T-019 T-020 redispatched). Build green throughout.
