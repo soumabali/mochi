@@ -8,8 +8,7 @@ namespace MochiV2.UI.Overlay
 {
     /// <summary>
     /// SkiaSharp drawing surface for Mochi overlay.
-    /// Renders current sprite frame from AnimationManager.
-    /// Falls back to placeholder pink circle if no frame available.
+    /// Renders current sprite frame from AnimationManager with transparency.
     /// </summary>
     public sealed class MochiRenderer
     {
@@ -25,8 +24,12 @@ namespace MochiV2.UI.Overlay
         /// <summary>Current animation manager (set by App).</summary>
         public AnimationManager? AnimationManager { get; set; }
 
-        /// <summary>Sprite display scale (1.0 = native 256px).</summary>
-        public float Scale { get; set; } = 1.0f;
+        /// <summary>Sprite display scale (1.0 = native pixel size).</summary>
+        public float Scale { get; set; } = 2.0f; // 128px native * 2 = 256px display
+
+        // Cache last decoded bitmap to avoid re-decoding same frame every 60fps
+        private SKBitmap? _cachedBitmap;
+        private string? _cachedFramePath;
 
         /// <summary>
         /// Draws current overlay frame: sprite from AnimationManager or placeholder.
@@ -44,25 +47,41 @@ namespace MochiV2.UI.Overlay
             {
                 try
                 {
-                    using var bitmap = SKBitmap.Decode(framePath);
-                    if (bitmap != null)
+                    // Cache bitmap — only decode if frame path changed
+                    if (_cachedBitmap == null || _cachedFramePath != framePath)
                     {
+                        _cachedBitmap?.Dispose();
+                        _cachedBitmap = SKBitmap.Decode(framePath);
+                        _cachedFramePath = framePath;
+                    }
+
+                    if (_cachedBitmap != null)
+                    {
+                        // Use native bitmap size, scaled by Scale factor
+                        float nativeW = _cachedBitmap.Width;
+                        float nativeH = _cachedBitmap.Height;
+                        float displayW = nativeW * Scale;
+                        float displayH = nativeH * Scale;
+
                         // Position cat at bottom-center of screen
-                        float spriteSize = 256f * Scale;
-                        float x = dimensions.Width / 2f - spriteSize / 2f;
-                        float y = dimensions.Height - spriteSize - 50f; // 50px from bottom
+                        float x = dimensions.Width / 2f - displayW / 2f;
+                        float y = dimensions.Height - displayH - 60f; // 60px from bottom (taskbar)
 
-                        // Account for taskbar (rough estimate)
-                        y -= 40f;
+                        var destRect = new SKRect(x, y, x + displayW, y + displayH);
+                        var srcRect = new SKRect(0, 0, nativeW, nativeH);
 
-                        var destRect = new SKRect(x, y, x + spriteSize, y + spriteSize);
-                        canvas.DrawBitmap(bitmap, destRect);
+                        // Draw with alpha blending for transparency
+                        using var paint = new SKPaint
+                        {
+                            IsAntialias = true,
+                            FilterQuality = SKFilterQuality.Medium
+                        };
+                        canvas.DrawBitmap(_cachedBitmap, srcRect, destRect, paint);
                         return;
                     }
                 }
                 catch (Exception ex)
                 {
-                    // Log and fall through to placeholder
                     System.Diagnostics.Debug.WriteLine($"Failed to decode frame: {ex.Message}");
                 }
             }
@@ -70,7 +89,7 @@ namespace MochiV2.UI.Overlay
             // Placeholder: filled pink circle
             float radius = Math.Min(dimensions.Width, dimensions.Height) * 0.05f;
             float cx = dimensions.Width / 2f;
-            float cy = dimensions.Height - radius - 50f;
+            float cy = dimensions.Height - radius - 60f;
 
             using (var paint = new SKPaint
             {
