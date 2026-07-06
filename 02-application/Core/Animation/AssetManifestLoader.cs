@@ -83,15 +83,16 @@ namespace MochiV2.Core.Animation
                 return new List<string>();
             }
 
-            var files = Directory.GetFiles(folderPath, "*.png")
-                .OrderBy(f => Path.GetFileName(f), StringComparer.OrdinalIgnoreCase)
-                .ToList();
+            var files = Directory.GetFiles(folderPath, "*.webp")
+             .Concat(Directory.GetFiles(folderPath, "*.png"))
+             .OrderBy(f => Path.GetFileName(f), StringComparer.OrdinalIgnoreCase)
+             .ToList();
 
             if (files.Count == 0)
-            {
-                Log.Warning("Sprite folder has no PNGs: {FolderPath}", folderPath);
-                AssetMissing?.Invoke(stateName ?? string.Empty, folderPath);
-            }
+             {
+             Log.Warning("Sprite folder has no WebP/PNGs: {FolderPath}", folderPath);
+             AssetMissing?.Invoke(stateName ?? string.Empty, folderPath);
+             }
 
             return files;
         }

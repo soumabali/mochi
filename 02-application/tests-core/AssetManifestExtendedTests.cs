@@ -251,7 +251,7 @@ namespace MochiV2.Tests.Core
             var manifest = await loader.LoadAsync(ManifestPath);
 
             var surprised = manifest.Sprites["Surprised"];
-            Assert.Equal("Sprite/cat_surpised", surprised.Folder);
+            Assert.Equal("Sprite_optimized/cat_surpised", surprised.Folder);
             // Should NOT be the corrected spelling
             Assert.DoesNotContain("cat_surprised", surprised.Folder);
         }

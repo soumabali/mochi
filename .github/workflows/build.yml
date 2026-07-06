@@ -5,6 +5,7 @@ on:
     branches: [main]
   pull_request:
     branches: [main]
+  workflow_dispatch:
 
 jobs:
   build:
@@ -28,15 +29,27 @@ jobs:
       - name: Test
         working-directory: 02-application
         run: dotnet test tests-core --configuration Release --no-build
-        continue-on-error: true # asset-dependent tests need 2.1GB sprites not in git
+        continue-on-error: true
 
       - name: Publish single-file exe
         working-directory: 02-application/App
         run: dotnet publish MochiV2.csproj --configuration Release -r win-x64 --self-contained false -p:PublishSingleFile=true -p:IncludeNativeLibrariesForSelfExtract=true -o ../../publish
 
+      - name: Bundle assets into publish folder
+        shell: pwsh
+        run: |
+          Copy-Item -Path 02-application/Assets/Sprite_optimized -Destination publish/Assets/Sprite_optimized -Recurse -Force
+          Copy-Item -Path 02-application/Assets/Sound -Destination publish/Assets/Sound -Recurse -Force
+          Copy-Item -Path 02-application/Assets/manifest.json -Destination publish/Assets/manifest.json -Force
+          Write-Host "Bundle size: $((Get-ChildItem publish -Recurse | Measure-Object -Property Length -Sum).Sum / 1MB)MB"
+
+      - name: Zip bundle
+        shell: pwsh
+        run: Compress-Archive -Path publish/* -DestinationPath MochiV2-win-x64-bundle.zip -Force
+
       - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
-          name: MochiV2-win-x64
-          path: publish/
+          name: MochiV2-win-x64-bundle
+          path: MochiV2-win-x64-bundle.zip
           retention-days: 30

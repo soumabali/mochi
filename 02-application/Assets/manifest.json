@@ -1,30 +1,106 @@
 {
   "sprites": {
-    "IdleLeft": { "folder": "Sprite/cat_blinking_left", "mode": "holdFirstFrame" },
-    "IdleRight": { "folder": "Sprite/cat_blinking_right", "mode": "holdFirstFrame" },
-    "BlinkLeft": { "folder": "Sprite/cat_blinking_left", "mode": "playOnce" },
-    "BlinkRight": { "folder": "Sprite/cat_blinking_right", "mode": "playOnce" },
-    "WalkLeft": { "folder": "Sprite/cat_walking_left", "mode": "loop" },
-    "WalkRight": { "folder": "Sprite/cat_walking_right", "mode": "loop" },
-    "WalkForward": { "folder": "Sprite/cat_walking_forward", "mode": "loop" },
-    "RunVar1": { "folder": "Sprite/run_1", "mode": "loop" },
-    "RunVar2": { "folder": "Sprite/run_2", "mode": "loop" },
-    "JumpVar1": { "folder": "Sprite/jump_1", "mode": "playOnce" },
-    "JumpVar2": { "folder": "Sprite/jump_2", "mode": "playOnce" },
-    "FallVar1": { "folder": "Sprite/jump_1", "mode": "playOnceReversed" },
-    "FallVar2": { "folder": "Sprite/jump_2", "mode": "playOnceReversed" },
-    "SleepYawn": { "folder": "Sprite/cat_sleepy_yawn", "mode": "playOnceThenHoldLast" },
-    "WakeUp": { "folder": "Sprite/cat_sleepy_yawn", "mode": "playOnceReversed" },
-    "MeowLeft": { "folder": "Sprite/cat_meowing_left", "mode": "playOnce" },
-    "MeowRight": { "folder": "Sprite/cat_meowing_right", "mode": "playOnce" },
-    "ScratchLeft": { "folder": "Sprite/cat_scratching_left", "mode": "playOnce" },
-    "ScratchRight": { "folder": "Sprite/cat_scratching_right", "mode": "playOnce" },
-    "Angry": { "folder": "Sprite/cat_angry_scratch_paw", "mode": "loop" },
-    "Surprised": { "folder": "Sprite/cat_surpised", "mode": "playOnce" },
-    "Playful": { "folder": "Sprite/cat_chasing_wand", "mode": "loop" },
-    "HungryStandard": { "folder": "Sprite/begging_food", "mode": "loop" },
-    "HungryCritical": { "folder": "Sprite/cat_hungry_begging_food", "mode": "loop" },
-    "Eating": { "folder": "Sprite/begging_food", "mode": "loop", "speedMultiplier": 1.3 }
+    "IdleLeft": {
+      "folder": "Sprite_optimized/cat_blinking_left",
+      "mode": "holdFirstFrame"
+    },
+    "IdleRight": {
+      "folder": "Sprite_optimized/cat_blinking_right",
+      "mode": "holdFirstFrame"
+    },
+    "BlinkLeft": {
+      "folder": "Sprite_optimized/cat_blinking_left",
+      "mode": "playOnce"
+    },
+    "BlinkRight": {
+      "folder": "Sprite_optimized/cat_blinking_right",
+      "mode": "playOnce"
+    },
+    "WalkLeft": {
+      "folder": "Sprite_optimized/cat_walking_left",
+      "mode": "loop"
+    },
+    "WalkRight": {
+      "folder": "Sprite_optimized/cat_walking_right",
+      "mode": "loop"
+    },
+    "WalkForward": {
+      "folder": "Sprite_optimized/cat_walking_forward",
+      "mode": "loop"
+    },
+    "RunVar1": {
+      "folder": "Sprite_optimized/run_1",
+      "mode": "loop"
+    },
+    "RunVar2": {
+      "folder": "Sprite_optimized/run_2",
+      "mode": "loop"
+    },
+    "JumpVar1": {
+      "folder": "Sprite_optimized/jump_1",
+      "mode": "playOnce"
+    },
+    "JumpVar2": {
+      "folder": "Sprite_optimized/jump_2",
+      "mode": "playOnce"
+    },
+    "FallVar1": {
+      "folder": "Sprite_optimized/jump_1",
+      "mode": "playOnceReversed"
+    },
+    "FallVar2": {
+      "folder": "Sprite_optimized/jump_2",
+      "mode": "playOnceReversed"
+    },
+    "SleepYawn": {
+      "folder": "Sprite_optimized/cat_sleepy_yawn",
+      "mode": "playOnceThenHoldLast"
+    },
+    "WakeUp": {
+      "folder": "Sprite_optimized/cat_sleepy_yawn",
+      "mode": "playOnceReversed"
+    },
+    "MeowLeft": {
+      "folder": "Sprite_optimized/cat_meowing_left",
+      "mode": "playOnce"
+    },
+    "MeowRight": {
+      "folder": "Sprite_optimized/cat_meowing_right",
+      "mode": "playOnce"
+    },
+    "ScratchLeft": {
+      "folder": "Sprite_optimized/cat_scratching_left",
+      "mode": "playOnce"
+    },
+    "ScratchRight": {
+      "folder": "Sprite_optimized/cat_scratching_right",
+      "mode": "playOnce"
+    },
+    "Angry": {
+      "folder": "Sprite_optimized/cat_angry_scratch_paw",
+      "mode": "loop"
+    },
+    "Surprised": {
+      "folder": "Sprite_optimized/cat_surpised",
+      "mode": "playOnce"
+    },
+    "Playful": {
+      "folder": "Sprite_optimized/cat_chasing_wand",
+      "mode": "loop"
+    },
+    "HungryStandard": {
+      "folder": "Sprite_optimized/begging_food",
+      "mode": "loop"
+    },
+    "HungryCritical": {
+      "folder": "Sprite_optimized/cat_hungry_begging_food",
+      "mode": "loop"
+    },
+    "Eating": {
+      "folder": "Sprite_optimized/begging_food",
+      "mode": "loop",
+      "speedMultiplier": 1.3
+    }
   },
   "sounds": {
     "Angry": "Sound/cat_angry_scratch_paw.wav",

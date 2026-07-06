@@ -60,13 +60,13 @@ namespace MochiV2.Tests.Core
 
             // Spot-check a few sprite entries
             var idleLeft = manifest.Sprites["IdleLeft"];
-            Assert.Equal("Sprite/cat_blinking_left", idleLeft.Folder);
+            Assert.Equal("Sprite_optimized/cat_blinking_left", idleLeft.Folder);
             Assert.Equal(SpriteMode.HoldFirstFrame, idleLeft.Mode);
             Assert.Equal(1.0, idleLeft.SpeedMultiplier); // default when omitted
 
             // Eating has speedMultiplier 1.3
             var eating = manifest.Sprites["Eating"];
-            Assert.Equal("Sprite/begging_food", eating.Folder);
+            Assert.Equal("Sprite_optimized/begging_food", eating.Folder);
             Assert.Equal(SpriteMode.Loop, eating.Mode);
             Assert.Equal(1.3, eating.SpeedMultiplier);
 
@@ -77,7 +77,7 @@ namespace MochiV2.Tests.Core
             Assert.Equal(SpriteMode.PlayOnceThenHoldLast, manifest.Sprites["SleepYawn"].Mode);
 
             // Surprised uses the typo folder
-            Assert.Equal("Sprite/cat_surpised", manifest.Sprites["Surprised"].Folder);
+            Assert.Equal("Sprite_optimized/cat_surpised", manifest.Sprites["Surprised"].Folder);
 
             // statesWithoutSound contents
             Assert.Contains("IdleLeft", manifest.StatesWithoutSound);
