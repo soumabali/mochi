@@ -31,9 +31,9 @@ jobs:
         run: dotnet test tests-core --configuration Release --no-build
         continue-on-error: true
 
-      - name: Publish single-file exe
+      - name: Publish self-contained single-file exe
         working-directory: 02-application/App
-        run: dotnet publish MochiV2.csproj --configuration Release -r win-x64 --self-contained false -p:PublishSingleFile=true -p:IncludeNativeLibrariesForSelfExtract=true -o ../../publish
+        run: dotnet publish MochiV2.csproj --configuration Release -r win-x64 --self-contained true -p:PublishSingleFile=true -p:IncludeNativeLibrariesForSelfExtract=true -o ../../publish
 
       - name: Bundle assets into publish folder
         shell: pwsh
