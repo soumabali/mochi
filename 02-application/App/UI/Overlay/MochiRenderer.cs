@@ -3,12 +3,15 @@ using System.Diagnostics;
 using System.IO;
 using SkiaSharp;
 using MochiV2.Core.Animation;
+using MochiV2.Core.Behavior;
+using MochiV2.Core.Particles;
 
 namespace MochiV2.UI.Overlay
 {
     /// <summary>
     /// SkiaSharp drawing surface for Mochi overlay.
-    /// Renders current sprite frame from AnimationManager with transparency.
+    /// Renders: sprite frame + particles + micro-motion transforms.
+    /// All in one Draw() call, integrated with App render loop.
     /// </summary>
     public sealed class MochiRenderer
     {
@@ -18,22 +21,20 @@ namespace MochiV2.UI.Overlay
         private readonly Stopwatch _fpsStopwatch = Stopwatch.StartNew();
         private double _lastFps;
 
-        /// <summary>Frames-per-second measured by counting Draw calls.</summary>
         public double CurrentFps => _lastFps;
 
-        /// <summary>Current animation manager (set by App).</summary>
+        // Set by App each frame
         public AnimationManager? AnimationManager { get; set; }
+        public ParticleSystem? Particles { get; set; }
+        public MicroMotionService? MicroMotion { get; set; }
+        public float Scale { get; set; } = 2.0f;
+        public double CatX { get; set; }
+        public double CatY { get; set; }
 
-        /// <summary>Sprite display scale (1.0 = native pixel size).</summary>
-        public float Scale { get; set; } = 2.0f; // 128px native * 2 = 256px display
-
-        // Cache last decoded bitmap to avoid re-decoding same frame every 60fps
+        // Bitmap cache
         private SKBitmap? _cachedBitmap;
         private string? _cachedFramePath;
 
-        /// <summary>
-        /// Draws current overlay frame: sprite from AnimationManager or placeholder.
-        /// </summary>
         public void Draw(SKCanvas canvas, SKSize dimensions)
         {
             if (canvas == null)
@@ -41,13 +42,15 @@ namespace MochiV2.UI.Overlay
 
             TickFps();
 
-            // Try to render current sprite frame
+            // Clear transparent
+            canvas.Clear(SKColors.Transparent);
+
+            // ── 1. Draw cat sprite ─────────────────────────────────────
             string? framePath = AnimationManager?.ActiveController?.CurrentFramePath;
             if (!string.IsNullOrEmpty(framePath) && File.Exists(framePath))
             {
                 try
                 {
-                    // Cache bitmap — only decode if frame path changed
                     if (_cachedBitmap == null || _cachedFramePath != framePath)
                     {
                         _cachedBitmap?.Dispose();
@@ -57,27 +60,38 @@ namespace MochiV2.UI.Overlay
 
                     if (_cachedBitmap != null)
                     {
-                        // Use native bitmap size, scaled by Scale factor
                         float nativeW = _cachedBitmap.Width;
                         float nativeH = _cachedBitmap.Height;
                         float displayW = nativeW * Scale;
                         float displayH = nativeH * Scale;
 
-                        // Position cat at bottom-center of screen
-                        float x = dimensions.Width / 2f - displayW / 2f;
-                        float y = dimensions.Height - displayH - 60f; // 60px from bottom (taskbar)
+                        // Cat position from App
+                        float x = (float)CatX;
+                        float y = (float)CatY;
 
-                        var destRect = new SKRect(x, y, x + displayW, y + displayH);
+                        // Apply micro-motion (breathing scale, fidget offset)
+                        float scaleYOffset = 0f;
+                        float scaleX = 1f;
+                        float scaleY = 1f;
+                        if (MicroMotion != null)
+                        {
+                            scaleY = (float)MicroMotion.CurrentBreathingScaleY();
+                        }
+
+                        // Draw bitmap with breathing scale
+                        float adjustedH = displayH * scaleY;
+                        float adjustedW = displayW * scaleX;
+                        float dy = (displayH - adjustedH) / 2f; // bottom-anchor breathing
+
+                        var destRect = new SKRect(x, y + dy, x + adjustedW, y + dy + adjustedH);
                         var srcRect = new SKRect(0, 0, nativeW, nativeH);
 
-                        // Draw with alpha blending for transparency
                         using var paint = new SKPaint
                         {
                             IsAntialias = true,
                             FilterQuality = SKFilterQuality.Medium
                         };
                         canvas.DrawBitmap(_cachedBitmap, srcRect, destRect, paint);
-                        return;
                     }
                 }
                 catch (Exception ex)
@@ -85,20 +99,20 @@ namespace MochiV2.UI.Overlay
                     System.Diagnostics.Debug.WriteLine($"Failed to decode frame: {ex.Message}");
                 }
             }
-
-            // Placeholder: filled pink circle
-            float radius = Math.Min(dimensions.Width, dimensions.Height) * 0.05f;
-            float cx = dimensions.Width / 2f;
-            float cy = dimensions.Height - radius - 60f;
-
-            using (var paint = new SKPaint
+            else
             {
-                Color = PlaceholderColor,
-                IsAntialias = true,
-                Style = SKPaintStyle.Fill
-            })
+                // Placeholder: pink circle
+                float radius = 64f * Scale * 0.3f;
+                float cx = (float)CatX + 64f * Scale * 0.5f;
+                float cy = (float)CatY + 64f * Scale * 0.5f;
+                using var p = new SKPaint { Color = PlaceholderColor, IsAntialias = true, Style = SKPaintStyle.Fill };
+                canvas.DrawCircle(cx, cy, radius, p);
+            }
+
+            // ── 2. Draw particles (hearts, Zzz, !, dust) ───────────────
+            if (Particles != null)
             {
-                canvas.DrawCircle(cx, cy, radius, paint);
+                Particles.Draw(canvas);
             }
         }
 

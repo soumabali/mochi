@@ -1,6 +1,9 @@
 using System;
 using System.IO;
 using System.Threading;
+using MochiV2.Core.Behavior;
+using MochiV2.Core.Events;
+using MochiV2.Core.Models;
 using Microsoft.Extensions.DependencyInjection;
 using Serilog;
 using Serilog.Core;
@@ -10,18 +13,13 @@ namespace MochiV2
 {
     /// <summary>
     /// Entry point for MochiV2. Handles single-instance enforcement,
-    /// container bootstrap, Serilog configuration before
-    /// handing off to WPF <see cref="App"/> class.
+    /// DI container bootstrap, Serilog configuration.
     /// </summary>
     public static class Program
     {
         private const string MutexName = @"Global\MochiV2_SingleInstance_3F7A2E";
         private static Mutex? _singleInstanceMutex;
 
-        /// <summary>
-        /// Main entry point. WPF projects not using auto-generated Main
-        /// need a custom Main wired via <c>StartupObject</c>.
-        /// </summary>
         [STAThread]
         public static int Main(string[] args)
         {
@@ -29,7 +27,6 @@ namespace MochiV2
             _singleInstanceMutex = new Mutex(initiallyOwned: true, name: MutexName, out bool createdNew);
             if (!createdNew)
             {
-                // Another instance running — exit silently.
                 _singleInstanceMutex.Dispose();
                 _singleInstanceMutex = null;
                 return 0;
@@ -51,12 +48,12 @@ namespace MochiV2
                     outputTemplate: "{Timestamp:yyyy-MM-dd HH:mm:ss.fff zzz} [{Level:u3}] {Message:lj}{NewLine}{Exception}")
                 .CreateLogger();
 
-            Log.Information("MochiV2 starting up (v{Version})", "0.1.0");
+            Log.Information("MochiV2 starting up (v{Version})", "0.2.0");
             Log.Debug("Log directory: {LogDir}", logDir);
 
             try
             {
-                //--- container ------------------------------------------
+                //--- DI container: register ALL services ----------------------
                 var services = new ServiceCollection();
                 ConfigureServices(services);
                 IServiceProvider provider = services.BuildServiceProvider();
@@ -82,17 +79,135 @@ namespace MochiV2
         }
 
         /// <summary>
-        /// Registers services in container.
+        /// Registers ALL services in the DI container.
+        /// Order matters: interfaces first, then services that depend on them.
         /// </summary>
         internal static void ConfigureServices(IServiceCollection services)
         {
-            // Populated by subsequent tasks.
+            // --- Core infrastructure (no dependencies) ---------------------
+            services.AddSingleton<MochiV2.Core.Events.EventBus>();
+            services.AddSingleton<MochiV2.Core.Behavior.IRandom, MochiV2.Core.Behavior.StandardRandom>();
+            services.AddSingleton<MochiV2.Core.Behavior.ITimeProvider, MochiV2.Core.Behavior.StopwatchTimeProvider>();
+            services.AddSingleton<MochiV2.Core.Behavior.IWorkAreaProvider>(sp =>
+            {
+                // Default full-screen work area — will be refined at runtime
+                return new MochiV2.Core.Behavior.WorkAreaRect(0, 0, 1920, 1080);
+            });
+
+            // --- Asset loading ---------------------------------------------
+            services.AddSingleton<MochiV2.Core.Animation.AssetManifestLoader>();
+
+            // --- FSM -------------------------------------------------------
+            services.AddSingleton<MochiV2.Core.Behavior.FSM>(sp =>
+            {
+                var builder = new MochiV2.Core.Behavior.FSMBuilder();
+                // Wire core transitions
+                builder.AddTransition(MochiV2.Core.Models.FSMState.Idle, "walk_left", MochiV2.Core.Models.FSMState.WalkLeft);
+                builder.AddTransition(MochiV2.Core.Models.FSMState.Idle, "walk_right", MochiV2.Core.Models.FSMState.WalkRight);
+                builder.AddTransition(MochiV2.Core.Models.FSMState.Idle, "blink", MochiV2.Core.Models.FSMState.Blink);
+                builder.AddTransition(MochiV2.Core.Models.FSMState.Idle, "meow_left", MochiV2.Core.Models.FSMState.MeowLeft);
+                builder.AddTransition(MochiV2.Core.Models.FSMState.Idle, "meow_right", MochiV2.Core.Models.FSMState.MeowRight);
+                builder.AddTransition(MochiV2.Core.Models.FSMState.Idle, "scratch_left", MochiV2.Core.Models.FSMState.ScratchLeft);
+                builder.AddTransition(MochiV2.Core.Models.FSMState.Idle, "scratch_right", MochiV2.Core.Models.FSMState.ScratchRight);
+                builder.AddTransition(MochiV2.Core.Models.FSMState.Idle, "jump_var1", MochiV2.Core.Models.FSMState.JumpVar1);
+                builder.AddTransition(MochiV2.Core.Models.FSMState.Idle, "jump_var2", MochiV2.Core.Models.FSMState.JumpVar2);
+                builder.AddTransition(MochiV2.Core.Models.FSMState.Idle, "playful", MochiV2.Core.Models.FSMState.Playful);
+                builder.AddTransition(MochiV2.Core.Models.FSMState.Idle, "hungry_standard", MochiV2.Core.Models.FSMState.HungryStandard);
+                builder.AddTransition(MochiV2.Core.Models.FSMState.Idle, "hungry_critical", MochiV2.Core.Models.FSMState.HungryCritical);
+                builder.AddTransition(MochiV2.Core.Models.FSMState.Idle, "sleep", MochiV2.Core.Models.FSMState.Sleeping);
+                builder.AddTransition(MochiV2.Core.Models.FSMState.Idle, "run_var1", MochiV2.Core.Models.FSMState.RunVar1);
+                builder.AddTransition(MochiV2.Core.Models.FSMState.Idle, "run_var2", MochiV2.Core.Models.FSMState.RunVar2);
+                builder.AddTransition(MochiV2.Core.Models.FSMState.Idle, "surprised", MochiV2.Core.Models.FSMState.Surprised);
+                builder.AddTransition(MochiV2.Core.Models.FSMState.Idle, "eating", MochiV2.Core.Models.FSMState.Eating);
+                builder.AddTransition(MochiV2.Core.Models.FSMState.Idle, "walk_forward", MochiV2.Core.Models.FSMState.WalkForward);
+
+                // Walk states return to Idle
+                builder.AddTransition(MochiV2.Core.Models.FSMState.WalkLeft, "stop", MochiV2.Core.Models.FSMState.Idle);
+                builder.AddTransition(MochiV2.Core.Models.FSMState.WalkRight, "stop", MochiV2.Core.Models.FSMState.Idle);
+                builder.AddTransition(MochiV2.Core.Models.FSMState.WalkForward, "stop", MochiV2.Core.Models.FSMState.Idle);
+                builder.AddTransition(MochiV2.Core.Models.FSMState.RunVar1, "stop", MochiV2.Core.Models.FSMState.Idle);
+                builder.AddTransition(MochiV2.Core.Models.FSMState.RunVar2, "stop", MochiV2.Core.Models.FSMState.Idle);
+
+                // PlayOnce states return to Idle after finishing
+                builder.AddTransition(MochiV2.Core.Models.FSMState.JumpVar1, "finish", MochiV2.Core.Models.FSMState.Idle);
+                builder.AddTransition(MochiV2.Core.Models.FSMState.JumpVar2, "finish", MochiV2.Core.Models.FSMState.Idle);
+                builder.AddTransition(MochiV2.Core.Models.FSMState.MeowLeft, "finish", MochiV2.Core.Models.FSMState.Idle);
+                builder.AddTransition(MochiV2.Core.Models.FSMState.MeowRight, "finish", MochiV2.Core.Models.FSMState.Idle);
+                builder.AddTransition(MochiV2.Core.Models.FSMState.ScratchLeft, "finish", MochiV2.Core.Models.FSMState.Idle);
+                builder.AddTransition(MochiV2.Core.Models.FSMState.ScratchRight, "finish", MochiV2.Core.Models.FSMState.Idle);
+                builder.AddTransition(MochiV2.Core.Models.FSMState.Blink, "finish", MochiV2.Core.Models.FSMState.Idle);
+                builder.AddTransition(MochiV2.Core.Models.FSMState.Surprised, "finish", MochiV2.Core.Models.FSMState.Idle);
+                builder.AddTransition(MochiV2.Core.Models.FSMState.Fall, "finish", MochiV2.Core.Models.FSMState.Idle);
+                builder.AddTransition(MochiV2.Core.Models.FSMState.WakeUp, "finish", MochiV2.Core.Models.FSMState.Idle);
+                builder.AddTransition(MochiV2.Core.Models.FSMState.Playful, "stop", MochiV2.Core.Models.FSMState.Idle);
+                builder.AddTransition(MochiV2.Core.Models.FSMState.Angry, "release", MochiV2.Core.Models.FSMState.Fall);
+                builder.AddTransition(MochiV2.Core.Models.FSMState.Eating, "finish", MochiV2.Core.Models.FSMState.Idle);
+
+                // Sleep transitions
+                builder.AddTransition(MochiV2.Core.Models.FSMState.Sleeping, "wake", MochiV2.Core.Models.FSMState.WakeUp);
+                builder.AddTransition(MochiV2.Core.Models.FSMState.HungryStandard, "eat", MochiV2.Core.Models.FSMState.Eating);
+                builder.AddTransition(MochiV2.Core.Models.FSMState.HungryCritical, "eat", MochiV2.Core.Models.FSMState.Eating);
+
+                // Interrupts
+                builder.AddInterrupt("drag", FSMState.Drag);
+                builder.AddInterrupt("surprised", FSMState.Surprised);
+
+                return builder.Build();
+            });
+
+            // --- Animation -------------------------------------------------
+            services.AddSingleton<MochiV2.Core.Animation.AnimationManager>();
+
+            // --- Movement + Physics ---------------------------------------
+            services.AddSingleton<MochiV2.Core.Behavior.MovementService>(sp =>
+            {
+                var workArea = sp.GetRequiredService<MochiV2.Core.Behavior.IWorkAreaProvider>();
+                var random = sp.GetRequiredService<MochiV2.Core.Behavior.IRandom>();
+                return new MochiV2.Core.Behavior.MovementService(workArea, random, 128.0);
+            });
+            services.AddSingleton<MochiV2.Core.Behavior.MicroMotionService>();
+            services.AddSingleton<MochiV2.Core.Behavior.BehaviorPlanner>();
+            services.AddSingleton<MochiV2.Core.Behavior.InteractionHandler>();
+
+            // --- Physics ---------------------------------------------------
+            services.AddSingleton<MochiV2.Core.Physics.PhysicsEngine>(sp =>
+            {
+                var workArea = sp.GetRequiredService<MochiV2.Core.Behavior.IWorkAreaProvider>();
+                var initialPos = new MochiV2.Core.Models.Position(100, 100, MochiV2.Core.Models.Facing.Right);
+                return new MochiV2.Core.Physics.PhysicsEngine(workArea, 128.0, initialPos);
+            });
+
+            // --- Particles -------------------------------------------------
+            services.AddSingleton<MochiV2.Core.Particles.ParticleSystem>();
+
+            // --- Services (needs, mood, feeding, sleep) -------------------
+            services.AddSingleton<MochiV2.Core.Services.NeedsTicker>();
+            services.AddSingleton<MochiV2.Core.Services.MoodResolver>();
+            services.AddSingleton<MochiV2.Core.Services.FeedingService>();
+            services.AddSingleton<MochiV2.Core.Services.SleepService>();
+
+            // --- Awareness services --------------------------------------
+            services.AddSingleton<MochiV2.Core.Services.CursorCuriosityService>();
+            services.AddSingleton<MochiV2.Core.Services.TypingRateService>();
+            services.AddSingleton<MochiV2.Core.Services.NightModeService>();
+
+            // --- Infrastructure ------------------------------------------
+            services.AddSingleton<MochiV2.Infrastructure.Audio.AudioManager>(sp =>
+            {
+                // AudioManager will be configured with manifest after load
+                return new MochiV2.Infrastructure.Audio.AudioManager();
+            });
+            services.AddSingleton<MochiV2.Infrastructure.Input.CursorPoller>();
+            services.AddSingleton<MochiV2.Infrastructure.Input.KeyRateHook>();
+            services.AddSingleton<MochiV2.Infrastructure.Storage.SaveManager>();
+
+            // --- UI (Tray) ------------------------------------------------
+            services.AddSingleton<MochiV2.UI.Tray.TrayIconController>();
+
+            // --- Renderer --------------------------------------------------
+            services.AddSingleton<MochiV2.UI.Overlay.MochiRenderer>();
         }
 
-        /// <summary>
-        /// Resolves per-user log directory under %APPDATA%\NekoCompanion\logs.
-        /// Falls back to ~/.local/share/NekoCompanion/logs on non-Windows.
-        /// </summary>
         internal static string ResolveLogDirectory()
         {
             string? appData = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData);
@@ -106,9 +221,6 @@ namespace MochiV2
             return Path.Combine(appData, "NekoCompanion", "logs");
         }
 
-        /// <summary>
-        /// Launches WPF application.
-        /// </summary>
         private static int RunWpfApp(IServiceProvider provider, string[] args)
         {
             App.Services = provider;
