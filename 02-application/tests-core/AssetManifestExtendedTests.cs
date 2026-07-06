@@ -45,7 +45,7 @@ namespace MochiV2.Tests.Core
             var loader = new AssetManifestLoader();
             var manifest = await loader.LoadAsync(ManifestPath);
 
-            Assert.Equal(25, manifest.Sprites.Count);
+            Assert.Equal(27, manifest.Sprites.Count);
 
             // Every sprite entry should have a non-empty folder
             Assert.All(manifest.Sprites, kvp =>

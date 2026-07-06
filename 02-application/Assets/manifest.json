@@ -100,6 +100,14 @@
       "folder": "Sprite_optimized/begging_food",
       "mode": "loop",
       "speedMultiplier": 1.3
+    },
+    "Idle": {
+      "folder": "Sprite_optimized/cat_blinking_left",
+      "mode": "holdFirstFrame"
+    },
+    "Blink": {
+      "folder": "Sprite_optimized/cat_blinking_left",
+      "mode": "playOnce"
     }
   },
   "sounds": {
