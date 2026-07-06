@@ -1,12 +1,12 @@
 {
   "name": "mochi-v2",
   "created_at": "2026-07-05T00:00:00+08:00",
-  "current_phase": 3,
+  "current_phase": 4,
   "status": "active",
   "max_workers": 3,
   "stack": "WPF .NET 9 C#",
   "domain": "desktop",
-  "budget": { "usd_cap": null, "spent_usd": 0, "alert_at_pct": 80 },
+  "budget": {"usd_cap": 50, "spent_usd": 0, "alert_at_pct": 80},
   "executor": {
     "root_dir": "/home/ubuntu/projects/mochi-v2",
     "app_subdir": "02-application",

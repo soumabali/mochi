@@ -37,3 +37,7 @@ Events: `enter`, `gate-review`, `progress-report`, `close`.
 - verdict: report
 - by: Hermes (Ame)
 - notes: PLAN.md with 7 milestones (M1-M7). TASKS.md with 24 tasks (20 build + 4 test). Pre-flight: dotnet SDK not installed (R1 mitigation).
+## 2026-07-06T00:00:00+08:00 | phase 4 BUILD | enter
+- verdict: report
+- by: Hermes (Ame)
+- notes: Autonomous sprint mode entered. .NET 9 SDK installed (v9.0.315). dotnet build succeeds (0 warnings, 0 errors). 52 core tests pass. T-001..T-008 marked done (M1+M2 complete). T-005 AnimationManager committed. Sprint T-009..T-024 starts now.
