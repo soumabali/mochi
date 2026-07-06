@@ -5,16 +5,18 @@ using SkiaSharp;
 using MochiV2.Core.Animation;
 using MochiV2.Core.Behavior;
 using MochiV2.Core.Particles;
+using MochiV2.Core.Services;
 
 namespace MochiV2.UI.Overlay
 {
     /// <summary>
     /// SkiaSharp drawing surface for Mochi overlay.
-    /// Renders: sprite frame + particles + micro-motion transforms.
+    /// Renders: sprite + particles + micro-motion + night tint + squash/stretch + sad filter.
     /// </summary>
     public sealed class MochiRenderer
     {
         internal static readonly SKColor PlaceholderColor = new SKColor(0xE8, 0xA0, 0xBF);
+        private static readonly SKColor NightTint = new SKColor(0x20, 0x30, 0x60, 0x20); // cool blue, low alpha
 
         private int _frameCount;
         private readonly Stopwatch _fpsStopwatch = Stopwatch.StartNew();
@@ -26,9 +28,12 @@ namespace MochiV2.UI.Overlay
         public AnimationManager? AnimationManager { get; set; }
         public ParticleSystem? Particles { get; set; }
         public MicroMotionService? MicroMotion { get; set; }
-        public float Scale { get; set; } = 2.0f;
+        public NightModeService? NightMode { get; set; }
+        public float Scale { get; set; } = 1.5f;
         public double CatX { get; set; }
         public double CatY { get; set; }
+        public double SquashAmount { get; set; } // 0-1, squash on landing
+        public string CurrentMood { get; set; } = "Content";
 
         // Bitmap cache
         private SKBitmap? _cachedBitmap;
@@ -36,12 +41,10 @@ namespace MochiV2.UI.Overlay
 
         public void Draw(SKCanvas canvas, SKSize dimensions)
         {
-            if (canvas == null)
-                throw new ArgumentNullException(nameof(canvas));
-
+            if (canvas == null) throw new ArgumentNullException(nameof(canvas));
             TickFps();
 
-            // Try to render current sprite frame
+            // Try render sprite
             string? framePath = AnimationManager?.ActiveController?.CurrentFramePath;
             if (!string.IsNullOrEmpty(framePath) && File.Exists(framePath))
             {
@@ -50,7 +53,6 @@ namespace MochiV2.UI.Overlay
                     if (_cachedBitmap == null || _cachedFramePath != framePath)
                     {
                         _cachedBitmap?.Dispose();
-                        // PNG sprites already have proper alpha — simple decode
                         _cachedBitmap = SKBitmap.Decode(framePath);
                         _cachedFramePath = framePath;
                     }
@@ -65,16 +67,21 @@ namespace MochiV2.UI.Overlay
                         float x = (float)CatX;
                         float y = (float)CatY;
 
-                        // Apply micro-motion (breathing scale)
-                        float scaleY = 1f;
+                        // A-03/A-04: Micro-motion breathing
+                        float breathScaleY = 1f;
                         if (MicroMotion != null)
-                        {
-                            scaleY = (float)MicroMotion.CurrentBreathingScaleY();
-                        }
+                            breathScaleY = (float)MicroMotion.CurrentBreathingScaleY();
 
-                        float adjustedH = displayH * scaleY;
-                        float adjustedW = displayW;
-                        float dy = (displayH - adjustedH) / 2f;
+                        // A-05: Squash & stretch on landing
+                        float squashY = 1f - (float)SquashAmount * 0.1f; // 10% compress
+                        float stretchX = 1f + (float)SquashAmount * 0.05f; // 5% stretch
+
+                        float finalScaleY = breathScaleY * squashY;
+                        float finalScaleX = stretchX;
+
+                        float adjustedH = displayH * finalScaleY;
+                        float adjustedW = displayW * finalScaleX;
+                        float dy = (displayH - adjustedH) / 2f; // bottom-anchor
 
                         var destRect = new SKRect(x, y + dy, x + adjustedW, y + dy + adjustedH);
                         var srcRect = new SKRect(0, 0, nativeW, nativeH);
@@ -83,30 +90,53 @@ namespace MochiV2.UI.Overlay
                         {
                             IsAntialias = true,
                             FilterQuality = SKFilterQuality.Medium,
-                            Color = SKColors.White.WithAlpha(255) // opaque, bitmap alpha drives transparency
                         };
+
+                        // A-08: Sad mood → desaturate
+                        if (CurrentMood == "Sad")
+                        {
+                            paint.ColorFilter = SKColorFilter.CreateColorMatrix(new float[]
+                            {
+                                0.3f, 0.6f, 0.1f, 0, 0,  // R
+                                0.3f, 0.6f, 0.1f, 0, 0,  // G
+                                0.3f, 0.6f, 0.1f, 0, 0,  // B
+                                0, 0, 0, 1, 0            // A
+                            });
+                        }
+
                         canvas.DrawBitmap(_cachedBitmap, srcRect, destRect, paint);
                     }
                 }
                 catch (Exception ex)
                 {
-                    System.Diagnostics.Debug.WriteLine($"Failed to decode frame: {ex.Message}");
+                    System.Diagnostics.Debug.WriteLine($"Decode error: {ex.Message}");
                 }
             }
             else
             {
-                // Placeholder: pink circle
-                float radius = 64f * Scale * 0.3f;
-                float cx = (float)CatX + 64f * Scale * 0.5f;
-                float cy = (float)CatY + 64f * Scale * 0.5f;
+                // Placeholder
+                float r = 40f * Scale * 0.3f;
+                float cx = (float)CatX + 100f * Scale * 0.5f;
+                float cy = (float)CatY + 100f * Scale * 0.5f;
                 using var p = new SKPaint { Color = PlaceholderColor, IsAntialias = true, Style = SKPaintStyle.Fill };
-                canvas.DrawCircle(cx, cy, radius, p);
+                canvas.DrawCircle(cx, cy, r, p);
             }
 
-            // Draw particles
+            // A-02: Position particles at cat location
             if (Particles != null)
             {
+                // Set emit origin to cat center before drawing
+                float catCenterX = (float)CatX + (float)(100 * Scale * 0.5);
+                float catCenterY = (float)CatY + (float)(100 * Scale * 0.5);
+                Particles.SetEmitOrigin(new SKPoint(catCenterX, catCenterY));
                 Particles.Draw(canvas);
+            }
+
+            // A-06: Night mode tint overlay
+            if (NightMode != null && NightMode.IsActive)
+            {
+                using var tintPaint = new SKPaint { Color = NightTint, Style = SKPaintStyle.Fill };
+                canvas.DrawRect(new SKRect(0, 0, dimensions.Width, dimensions.Height), tintPaint);
             }
         }
 

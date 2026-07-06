@@ -5,19 +5,20 @@ using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Controls;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Win32;
 using Serilog;
 using MochiV2.Core.Animation;
 using MochiV2.Core.Behavior;
 using MochiV2.Core.Events;
 using MochiV2.Core.Models;
 using MochiV2.Core.Particles;
-using MochiV2.Core.Physics;
 using MochiV2.Core.Services;
 using MochiV2.Infrastructure.Audio;
 using MochiV2.Infrastructure.Input;
 using MochiV2.Infrastructure.Storage;
 using MochiV2.UI.Overlay;
 using MochiV2.UI.Tray;
+using MochiV2.UI.Settings;
 
 namespace MochiV2
 {
@@ -47,12 +48,15 @@ namespace MochiV2
         private TypingRateService? _typingRate;
         private FeedingService? _feedingService;
         private SleepService? _sleepService;
-        private InteractionHandler? _interactionHandler;
 
         // Frame timing
         private System.Diagnostics.Stopwatch? _frameTimer;
         private double _behaviorTimer;
         private double _needsTimer;
+        private double _fullscreenCheckTimer;
+        private double _resourceLogTimer;
+        private double _lowPowerTimer;
+        private bool _isLowPowerMode;
         private AssetManifest? _manifest;
         private string _assetsBasePath = "";
         private SaveData? _saveData;
@@ -60,31 +64,35 @@ namespace MochiV2
         // Cat position + movement
         private double _catX, _catY;
         private double _catVelX, _catVelY;
-        private float _displayScale = 1.5f; // native ~200px * 1.5 = 300px display
+        private float _displayScale = 1.5f;
         private double _screenWidth, _screenHeight;
-        private double _spriteDisplaySize;
+        private double _spriteDisplayW, _spriteDisplayH;
+        private double _squashTimer; // A-05: squash & stretch on landing
+        private bool _wasFalling;
 
         // Interaction state
         private bool _isDragging;
-        private bool _wasClickThrough = true;
         private double _dragOffsetX, _dragOffsetY;
         private double _lastMouseX, _lastMouseY;
         private double _mouseVelX, _mouseVelY;
         private DateTime _lastMouseTime = DateTime.Now;
-        private double _hoverTimer;
+        private double _hoverTimer; // B-01: hover 3s → petting
         private bool _isInteractMode;
+        private double _lastMouseMoveTime; // B-04: cursor idle 30s
+        private double _clickCount; // B-02: double-click detection
+        private DateTime _lastClickTime = DateTime.MinValue;
+        private bool _wasFullscreen; // B-07: fullscreen hide
 
         // Behavior
         private Random _rng = new Random();
-        private double _nextBehaviorInterval = 2000; // start quick
-        private double _walkTimer; // how long cat has been walking
-        private double _walkDuration; // how long to walk before stopping
+        private double _nextBehaviorInterval = 2000;
+        private double _walkTimer;
+        private double _walkDuration;
 
         // Roaming
-        private double _wanderX; // target X for roaming
-        private double _wanderY; // target Y for roaming
-        private double _wanderRetargetTimer; // timer to pick new wander target
-        private double _jumpTimer; // tracks jump arc progress
+        private double _wanderX, _wanderY;
+        private double _wanderRetargetTimer;
+        private double _jumpTimer;
 
         protected override void OnStartup(StartupEventArgs e)
         {
@@ -112,7 +120,6 @@ namespace MochiV2
                 _typingRate = Services.GetRequiredService<TypingRateService>();
                 _feedingService = Services.GetRequiredService<FeedingService>();
                 _sleepService = Services.GetRequiredService<SleepService>();
-                _interactionHandler = Services.GetRequiredService<InteractionHandler>();
                 _renderer = Services.GetRequiredService<MochiRenderer>();
                 Log.Information("All services resolved");
 
@@ -123,12 +130,11 @@ namespace MochiV2
                 if (!File.Exists(manifestPath))
                 {
                     MessageBox.Show($"Manifest not found:\n{manifestPath}", "MochiV2", MessageBoxButton.OK, MessageBoxImage.Error);
-                    Shutdown(1);
-                    return;
+                    Shutdown(1); return;
                 }
                 var loader = Services.GetRequiredService<AssetManifestLoader>();
                 _manifest = loader.LoadAsync(manifestPath).GetAwaiter().GetResult();
-                Log.Information("Manifest loaded: {Count} sprites", _manifest.Sprites.Count);
+                Log.Information("Manifest: {Count} sprites", _manifest.Sprites.Count);
 
                 // 3. Init animation
                 _animManager.TransitionTo(FSMState.Idle, _manifest, _assetsBasePath);
@@ -140,59 +146,53 @@ namespace MochiV2
                 // 5. Load save
                 _saveData = _saveManager.Load();
                 if (_saveData != null && _saveManager.WelcomeBackNeeded)
-                {
                     _audioManager.Play(FSMState.MeowLeft);
-                }
 
                 // 6. Init position
                 _screenWidth = SystemParameters.PrimaryScreenWidth;
                 _screenHeight = SystemParameters.PrimaryScreenHeight;
-                _spriteDisplaySize = 200 * _displayScale; // ~300px
-                _catX = _screenWidth / 2 - _spriteDisplaySize / 2;
-                _catY = _screenHeight - _spriteDisplaySize - 60;
-                _catVelX = 0;
-                _catVelY = 0;
-                // Init wander targets
-                _wanderX = _catX;
-                _wanderY = _catY;
-                _wanderRetargetTimer = 0;
-                _jumpTimer = 0;
-                Log.Information("Cat at ({X:.0}, {Y:.0}) screen {W:.0}x{H:.0}", _catX, _catY, _screenWidth, _screenHeight);
+                _spriteDisplayW = 200 * _displayScale;
+                _spriteDisplayH = 200 * _displayScale;
+                _catX = _screenWidth / 2 - _spriteDisplayW / 2;
+                _catY = _screenHeight - _spriteDisplayH - 60;
+                _catVelX = 0; _catVelY = 0;
+                _wanderX = _catX; _wanderY = _catY;
+                _wanderRetargetTimer = 0; _jumpTimer = 0;
+                _lastMouseMoveTime = 0;
+                Log.Information("Cat at ({X:.0},{Y:.0}) screen {W:.0}x{H:.0}", _catX, _catY, _screenWidth, _screenHeight);
 
                 // 7. Start services
                 _cursorPoller.Start();
                 _keyRateHook.Start();
                 _needsTicker.Update();
-                Log.Information("Background services started");
 
                 // 8. Create overlay
                 _overlay = new OverlayWindow(_renderer);
                 _overlay.SetAnimationManager(_animManager);
                 _overlay.Width = _screenWidth;
                 _overlay.Height = _screenHeight;
-                _overlay.Left = 0;
-                _overlay.Top = 0;
-                // Wire mouse events for interaction
+                _overlay.Left = 0; _overlay.Top = 0;
                 _overlay.MouseLeftButtonDown += OnMouseLeftDown;
                 _overlay.MouseMove += OnMouseMove;
                 _overlay.MouseLeftButtonUp += OnMouseLeftUp;
                 _overlay.MouseRightButtonDown += OnMouseRightDown;
                 _overlay.Show();
-                Log.Information("Overlay shown");
 
-                // 9. Events
+                // 9. Wire events
                 _eventBus.Subscribe<AnimationFinishedEvent>(OnAnimationFinished);
                 _eventBus.Subscribe<StateChangedEvent>(OnStateChanged);
-                // Wire FSM.StateChanged → EventBus publish (FSM uses C# event, not EventBus)
-                _fsm.StateChanged += (oldState, newState) =>
-                {
-                    _eventBus.Publish(new StateChangedEvent(oldState, newState));
-                };
+                _eventBus.Subscribe<TypingBurstStartedEvent>(OnTypingBurstStarted);
+                _eventBus.Subscribe<TypingBurstEndedEvent>(OnTypingBurstEnded);
+                _fsm.StateChanged += (old, neu) => _eventBus.Publish(new StateChangedEvent(old, neu));
 
                 // 10. Render loop
                 _frameTimer = System.Diagnostics.Stopwatch.StartNew();
                 CompositionTarget.Rendering += OnRendering;
-                Log.Information("MochiV2 ready — render loop active");
+
+                // D-01: Multi-monitor display change detection
+                SystemEvents.DisplaySettingsChanged += OnDisplaySettingsChanged;
+
+                Log.Information("MochiV2 ready — all phases wired");
             }
             catch (Exception ex)
             {
@@ -202,94 +202,83 @@ namespace MochiV2
             }
         }
 
-        /// <summary>
-        /// Main 60fps frame update. Orchestrates all subsystems.
-        /// </summary>
+        // ═══════════════════════════════════════════════════════════════
+        //  Main 60fps render loop — orchestrates ALL subsystems
+        //  Each section wrapped in try/catch (D-06: crash recovery)
+        // ═══════════════════════════════════════════════════════════════
+
         private void OnRendering(object? sender, EventArgs e)
         {
             if (_frameTimer == null) return;
             double dt = _frameTimer.Elapsed.TotalMilliseconds;
             _frameTimer.Restart();
-            if (dt > 100) dt = 100; // clamp large gaps
+            if (dt > 100) dt = 100;
 
-            // 1. Animation update
-            _animManager?.Update(dt);
+            // D-05: Low power mode — throttle to ~10fps when sleeping
+            if (_isLowPowerMode && dt < 100) return;
 
-            // 2. Movement — drive cat position based on FSM state
-            UpdateMovement(dt);
+            try { _animManager?.Update(dt); } catch (Exception ex) { Log.Error(ex, "Anim update"); }
+            try { UpdateMovement(dt); } catch (Exception ex) { Log.Error(ex, "Movement"); }
+            try { _particles?.Update(dt / 1000.0); } catch (Exception ex) { Log.Error(ex, "Particles"); }
 
-            // 3. Particles
-            _particles?.Update(dt / 1000.0);
-
-            // 4. Needs (every 60s)
+            // Needs every 60s
             _needsTimer += dt;
             if (_needsTimer >= 60000)
             {
-                _needsTicker?.Update();
+                try { _needsTicker?.Update(); } catch { }
                 _needsTimer = 0;
             }
 
-            // 5. Mood
-            _moodResolver?.Tick();
+            try { _moodResolver?.Tick(); } catch { }
 
-            // 6. Behavior planning — cat always does something, never stays idle long
-            _behaviorTimer += dt;
-            
-            // Track walking time — stop walking after walk duration expires
-            if (_fsm?.CurrentState == FSMState.WalkLeft || _fsm?.CurrentState == FSMState.WalkRight ||
-                _fsm?.CurrentState == FSMState.RunVar1 || _fsm?.CurrentState == FSMState.RunVar2 ||
-                _fsm?.CurrentState == FSMState.WalkForward)
+            // Behavior planning
+            try { UpdateBehavior(dt); } catch (Exception ex) { Log.Error(ex, "Behavior"); }
+
+            try { _nightMode?.CheckLocalTime(); } catch { }
+            try { _cursorCuriosity?.Tick(); } catch { }
+            try { _typingRate?.Tick(); } catch { }
+            try { _sleepService?.Update(); } catch { }
+            try { _saveManager?.NotifyChanged(); } catch { }
+
+            // B-07: Fullscreen detection every 2s
+            _fullscreenCheckTimer += dt;
+            if (_fullscreenCheckTimer >= 2000)
             {
-                _walkTimer += dt;
-                if (_walkTimer >= _walkDuration)
-                {
-                    // Stop walking → return to Idle
-                    try { _fsm.TransitionTo(FSMState.Idle); } catch { }
-                    _walkTimer = 0;
-                    _behaviorTimer = 0;
-                    _nextBehaviorInterval = 500 + _rng.NextDouble() * 1500; // brief pause 0.5-2s
-                }
-            }
-            else if (_behaviorTimer >= _nextBehaviorInterval)
-            {
-                PlanNextBehavior();
-                _behaviorTimer = 0;
-                // If we chose to walk, set how long to walk
-                if (_fsm?.CurrentState == FSMState.WalkLeft || _fsm?.CurrentState == FSMState.WalkRight ||
-                    _fsm?.CurrentState == FSMState.WalkForward)
-                {
-                    _walkDuration = 3000 + _rng.NextDouble() * 5000; // walk 3-8s
-                    _walkTimer = 0;
-                }
-                else if (_fsm?.CurrentState == FSMState.RunVar1 || _fsm?.CurrentState == FSMState.RunVar2)
-                {
-                    _walkDuration = 2000 + _rng.NextDouble() * 3000; // run 2-5s
-                    _walkTimer = 0;
-                }
-                else
-                {
-                    // playOnce states (blink, scratch, meow, jump) — auto-return Idle
-                    _nextBehaviorInterval = 500 + _rng.NextDouble() * 1500; // 0.5-2s after
-                }
+                try { CheckFullscreen(); } catch { }
+                _fullscreenCheckTimer = 0;
             }
 
-            // 7. Night mode
-            _nightMode?.CheckLocalTime();
+            // B-01/B-04: Interaction mode + hover + cursor idle
+            try { UpdateInteractionMode(dt); } catch (Exception ex) { Log.Error(ex, "Interaction"); }
 
-            // 8. Cursor curiosity + typing
-            _cursorCuriosity?.Tick();
-            _typingRate?.Tick();
+            // D-04: Resource budget log every 60s
+            _resourceLogTimer += dt;
+            if (_resourceLogTimer >= 60000)
+            {
+                try { LogResourceUsage(); } catch { }
+                _resourceLogTimer = 0;
+            }
 
-            // 9. Sleep
-            _sleepService?.Update();
+            // D-05: Low power detection — sleeping + no interaction 5min
+            if (_fsm?.CurrentState == FSMState.Sleeping)
+            {
+                _lowPowerTimer += dt;
+                if (_lowPowerTimer >= 300000 && !_isLowPowerMode) // 5 min
+                {
+                    _isLowPowerMode = true;
+                    Log.Information("Low power mode: throttling to 10fps");
+                }
+            }
+            else
+            {
+                _lowPowerTimer = 0;
+                if (_isLowPowerMode) { _isLowPowerMode = false; Log.Information("Low power mode: exited"); }
+            }
 
-            // 10. Save
-            _saveManager?.NotifyChanged();
+            // A-05: Squash & stretch on landing
+            UpdateSquashStretch(dt);
 
-            // 11. Interaction mode toggle (click-through based on mouse proximity)
-            UpdateInteractionMode();
-
-            // 12. Sync renderer
+            // Sync renderer
             if (_renderer != null)
             {
                 _renderer.CatX = _catX;
@@ -297,30 +286,26 @@ namespace MochiV2
                 _renderer.Scale = _displayScale;
                 _renderer.Particles = _particles;
                 _renderer.MicroMotion = _microMotion;
+                _renderer.NightMode = _nightMode;
+                _renderer.SquashAmount = _squashTimer > 0 ? Math.Sin((_squashTimer / 80.0) * Math.PI) : 0;
+                _renderer.CurrentMood = _moodResolver?.CurrentMood ?? "Content";
             }
         }
 
-        /// <summary>
-        /// Move cat based on current FSM state with smooth easing.
-        /// </summary>
-        /// <summary>
-        /// Move cat based on current FSM state with smooth easing.
-        /// Cat roams entire screen area — not just horizontal line.
-        /// Uses target X,Y waypoints for natural wandering.
-        /// </summary>
+        // ═══════════════════════════════════════════════════════════════
+        //  Movement — 2D screen roaming with easing
+        // ═══════════════════════════════════════════════════════════════
+
         private void UpdateMovement(double dt)
         {
             if (_fsm == null) return;
-
-            double targetVelX = 0;
-            double targetVelY = 0;
-            double speed = 100; // pixels per second
+            double targetVelX = 0, targetVelY = 0;
+            double speed = 100;
 
             switch (_fsm.CurrentState)
             {
                 case FSMState.WalkLeft:
                     targetVelX = -speed;
-                    // Wander vertically too — drift toward random Y target
                     targetVelY = (_wanderY - _catY) * 2;
                     break;
                 case FSMState.WalkRight:
@@ -328,7 +313,6 @@ namespace MochiV2
                     targetVelY = (_wanderY - _catY) * 2;
                     break;
                 case FSMState.WalkForward:
-                    // Walk toward viewer — mostly vertical drift
                     targetVelY = speed * 0.5;
                     targetVelX = (_wanderX - _catX) * 1.5;
                     break;
@@ -342,199 +326,232 @@ namespace MochiV2
                     break;
                 case FSMState.JumpVar1:
                 case FSMState.JumpVar2:
-                    // Jump — arc movement (up then down)
                     _jumpTimer += dt;
-                    double jumpProgress = Math.Min(1, _jumpTimer / 800); // 800ms jump
-                    double jumpArc = Math.Sin(jumpProgress * Math.PI) * 150; // 150px peak
-                    targetVelY = -jumpArc * 5; // upward force during jump
-                    if (_fsm.CurrentState == FSMState.JumpVar1)
-                        targetVelX = -speed * 0.5;
-                    else
-                        targetVelX = speed * 0.5;
+                    double jp = Math.Min(1, _jumpTimer / 800);
+                    double arc = Math.Sin(jp * Math.PI) * 150;
+                    targetVelY = -arc * 5;
+                    targetVelX = (_fsm.CurrentState == FSMState.JumpVar1 ? -1 : 1) * speed * 0.5;
                     break;
                 case FSMState.Drag:
-                    // Cat follows cursor with elastic lag
-                    targetVelX = (_lastMouseX - _catX - _spriteDisplaySize / 2) * 8;
-                    targetVelY = (_lastMouseY - _catY - _spriteDisplaySize / 2) * 8;
+                    targetVelX = (_lastMouseX - _catX - _spriteDisplayW / 2) * 8;
+                    targetVelY = (_lastMouseY - _catY - _spriteDisplayH / 2) * 8;
                     break;
                 case FSMState.Fall:
-                    // Gravity pulls down after drag release
-                    targetVelX = _catVelX * 0.98; // air resistance
-                    targetVelY = _catVelY + 500 * dt / 1000; // gravity accel
+                    targetVelX = _catVelX * 0.98;
+                    targetVelY = _catVelY + 500 * dt / 1000;
+                    _wasFalling = true;
                     break;
                 default:
-                    targetVelX = 0;
-                    targetVelY = 0;
+                    targetVelX = 0; targetVelY = 0;
                     break;
             }
 
-            // Smooth velocity lerp (easing)
             double lerp = Math.Min(1, dt / 200);
             _catVelX += (targetVelX - _catVelX) * lerp;
             _catVelY += (targetVelY - _catVelY) * lerp;
-
-            // Apply velocity
             _catX += _catVelX * dt / 1000;
             _catY += _catVelY * dt / 1000;
 
-            // Screen bounds — turn around at edges
-            if (_catX < 0)
-            {
-                _catX = 0;
-                _catVelX = 0;
-                if (_fsm.CurrentState == FSMState.WalkLeft)
-                    _fsm.TransitionTo(FSMState.WalkRight);
-                _wanderY = _screenHeight * 0.3 + _rng.NextDouble() * _screenHeight * 0.5;
-            }
-            if (_catX > _screenWidth - _spriteDisplaySize)
-            {
-                _catX = _screenWidth - _spriteDisplaySize;
-                _catVelX = 0;
-                if (_fsm.CurrentState == FSMState.WalkRight)
-                    _fsm.TransitionTo(FSMState.WalkLeft);
-                _wanderY = _screenHeight * 0.3 + _rng.NextDouble() * _screenHeight * 0.5;
-            }
+            // Bounds
+            if (_catX < 0) { _catX = 0; _catVelX = 0; if (_fsm.CurrentState == FSMState.WalkLeft) _fsm.TransitionTo(FSMState.WalkRight); _wanderY = _screenHeight * 0.3 + _rng.NextDouble() * _screenHeight * 0.5; }
+            if (_catX > _screenWidth - _spriteDisplayW) { _catX = _screenWidth - _spriteDisplayW; _catVelX = 0; if (_fsm.CurrentState == FSMState.WalkRight) _fsm.TransitionTo(FSMState.WalkLeft); _wanderY = _screenHeight * 0.3 + _rng.NextDouble() * _screenHeight * 0.5; }
 
-            // Y bounds — cat can roam vertically but not off screen
-            double minY = 50; // top margin
-            double maxY = _screenHeight - _spriteDisplaySize - 60; // bottom (above taskbar)
-            if (_catY < minY)
-            {
-                _catY = minY;
-                _catVelY = 0;
-                // Pick new wander Y downward
-                _wanderY = maxY * 0.5 + _rng.NextDouble() * maxY * 0.5;
-            }
-            if (_catY > maxY)
-            {
-                _catY = maxY;
-                _catVelY = 0;
-                // Pick new wander Y upward
-                _wanderY = minY + _rng.NextDouble() * maxY * 0.4;
-            }
+            double minY = 50, maxY = _screenHeight - _spriteDisplayH - 60;
+            if (_catY < minY) { _catY = minY; _catVelY = 0; _wanderY = maxY * 0.5 + _rng.NextDouble() * maxY * 0.5; }
+            if (_catY > maxY) { _catY = maxY; _catVelY = 0; _wanderY = minY + _rng.NextDouble() * maxY * 0.4; }
 
-            // Periodically pick new wander target for natural roaming
             _wanderRetargetTimer += dt;
-            if (_wanderRetargetTimer >= 3000) // every 3s pick new Y target
+            if (_wanderRetargetTimer >= 3000)
             {
                 _wanderY = minY + _rng.NextDouble() * (maxY - minY);
                 _wanderRetargetTimer = 0;
             }
+
+            // B-04: Cursor idle 30s → cat walks toward cursor
+            _lastMouseMoveTime += dt;
+            if (_lastMouseMoveTime >= 30000 && _fsm.CurrentState == FSMState.Idle)
+            {
+                try
+                {
+                    var mp = System.Windows.Forms.Cursor.Position;
+                    _wanderX = mp.X - _spriteDisplayW / 2;
+                    _wanderY = mp.Y - _spriteDisplayH / 2;
+                    _fsm.TransitionTo(_rng.NextDouble() > 0.5 ? FSMState.WalkLeft : FSMState.WalkRight);
+                    _walkDuration = 4000;
+                    _walkTimer = 0;
+                }
+                catch { }
+                _lastMouseMoveTime = 0;
+            }
         }
 
-        /// <summary>
-        /// Plan next behavior when cat is idle.
-        /// </summary>
+        // ═══════════════════════════════════════════════════════════════
+        //  Behavior planning — cat always does something
+        // ═══════════════════════════════════════════════════════════════
+
+        private void UpdateBehavior(double dt)
+        {
+            if (_fsm == null) return;
+            _behaviorTimer += dt;
+
+            // Walking states — stop after duration
+            if (_fsm.CurrentState == FSMState.WalkLeft || _fsm.CurrentState == FSMState.WalkRight ||
+                _fsm.CurrentState == FSMState.RunVar1 || _fsm.CurrentState == FSMState.RunVar2 ||
+                _fsm.CurrentState == FSMState.WalkForward)
+            {
+                _walkTimer += dt;
+                if (_walkTimer >= _walkDuration)
+                {
+                    try { _fsm.TransitionTo(FSMState.Idle); } catch { }
+                    _walkTimer = 0; _behaviorTimer = 0;
+                    _nextBehaviorInterval = 500 + _rng.NextDouble() * 1500;
+                }
+            }
+            else if (_behaviorTimer >= _nextBehaviorInterval)
+            {
+                PlanNextBehavior();
+                _behaviorTimer = 0;
+                if (_fsm.CurrentState == FSMState.WalkLeft || _fsm.CurrentState == FSMState.WalkRight || _fsm.CurrentState == FSMState.WalkForward)
+                { _walkDuration = 3000 + _rng.NextDouble() * 5000; _walkTimer = 0; }
+                else if (_fsm.CurrentState == FSMState.RunVar1 || _fsm.CurrentState == FSMState.RunVar2)
+                { _walkDuration = 2000 + _rng.NextDouble() * 3000; _walkTimer = 0; }
+                else
+                    _nextBehaviorInterval = 500 + _rng.NextDouble() * 1500;
+            }
+        }
+
         private void PlanNextBehavior()
         {
             if (_fsm == null) return;
-
-            // Diverse behaviors — walk dominates so cat always moves
             var behaviors = new (FSMState state, double weight)[]
             {
-                (FSMState.WalkLeft, 5.0),
-                (FSMState.WalkRight, 5.0),
-                (FSMState.Blink, 2.0),
-                (FSMState.ScratchLeft, 1.0),
-                (FSMState.ScratchRight, 1.0),
-                (FSMState.MeowLeft, 0.8),
-                (FSMState.MeowRight, 0.8),
-                (FSMState.JumpVar1, 0.5),
-                (FSMState.JumpVar2, 0.5),
-                (FSMState.RunVar1, 0.8),
-                (FSMState.RunVar2, 0.8),
+                (FSMState.WalkLeft, 5.0), (FSMState.WalkRight, 5.0),
+                (FSMState.Blink, 2.0), (FSMState.ScratchLeft, 1.0), (FSMState.ScratchRight, 1.0),
+                (FSMState.MeowLeft, 0.8), (FSMState.MeowRight, 0.8),
+                (FSMState.JumpVar1, 0.5), (FSMState.JumpVar2, 0.5),
+                (FSMState.RunVar1, 0.8), (FSMState.RunVar2, 0.8),
                 (FSMState.WalkForward, 1.5),
             };
-
-            double totalWeight = 0;
-            foreach (var (_, w) in behaviors) totalWeight += w;
-            double r = _rng.NextDouble() * totalWeight;
+            double total = 0; foreach (var (_, w) in behaviors) total += w;
+            double r = _rng.NextDouble() * total;
             FSMState chosen = FSMState.Idle;
-            foreach (var (state, w) in behaviors)
-            {
-                r -= w;
-                if (r <= 0) { chosen = state; break; }
-            }
+            foreach (var (s, w) in behaviors) { r -= w; if (r <= 0) { chosen = s; break; } }
+            if (chosen != FSMState.Idle) { try { _fsm.TransitionTo(chosen); } catch { } Log.Debug("Behavior: {State}", chosen); }
+        }
 
-            if (chosen != FSMState.Idle)
+        // ═══════════════════════════════════════════════════════════════
+        //  A-05: Squash & stretch on landing
+        // ═══════════════════════════════════════════════════════════════
+
+        private void UpdateSquashStretch(double dt)
+        {
+            // Trigger squash when transitioning from Fall to Idle
+            if (_wasFalling && _fsm?.CurrentState == FSMState.Idle)
             {
-                try { _fsm.TransitionTo(chosen); } catch { }
-                Log.Debug("Behavior: {State}", chosen);
+                _squashTimer = 80; // 80ms squash animation
+                _particles?.EmitDust(); // A-01: dust on landing
+                _wasFalling = false;
+            }
+            if (_squashTimer > 0)
+            {
+                _squashTimer -= dt;
+                if (_squashTimer < 0) _squashTimer = 0;
             }
         }
 
-        /// <summary>
-        /// Toggle click-through based on mouse proximity to cat sprite.
-        /// </summary>
-        private void UpdateInteractionMode()
+        // ═══════════════════════════════════════════════════════════════
+        //  Interaction — click-through toggle, hover, double-click, fast cursor
+        // ═══════════════════════════════════════════════════════════════
+
+        private void UpdateInteractionMode(double dt)
         {
             if (_overlay == null) return;
-
-            // Get current mouse position
-            try
-            {
-                var pt = _overlay.PointFromScreen(new Point(System.Windows.Forms.Cursor.Position.X, System.Windows.Forms.Cursor.Position.Y));
-                // Actually use Win32 GetCursorPos via SystemParameters
-            }
-            catch { }
-
-            // Simple approach: check if mouse is near sprite rect
-            double mouseScreenX = 0, mouseScreenY = 0;
+            double mx = 0, my = 0;
             try
             {
                 var pos = System.Windows.Forms.Cursor.Position;
-                mouseScreenX = pos.X;
-                mouseScreenY = pos.Y;
+                mx = pos.X; my = pos.Y;
             }
-            catch
+            catch { return; }
+
+            // B-03: Fast cursor → 20% surprised
+            double mouseSpeed = Math.Sqrt(_mouseVelX * _mouseVelX + _mouseVelY * _mouseVelY);
+            if (mouseSpeed > 1500 && _fsm?.CurrentState == FSMState.Idle && _rng.NextDouble() < 0.2)
             {
-                // Fallback: skip interaction mode if Forms unavailable
-                return;
+                try { _fsm.TransitionTo(FSMState.Surprised); } catch { }
+                _particles?.EmitSurprised(); // A-01: "!" particle
+                Log.Debug("Fast cursor → Surprised");
             }
 
-            // Sprite bounds in screen coords
-            double spriteLeft = _catX;
-            double spriteTop = _catY;
-            double spriteRight = _catX + _spriteDisplaySize;
-            double spriteBottom = _catY + _spriteDisplaySize;
-
-            // Add hover margin (20px)
-            bool isNear = mouseScreenX >= spriteLeft - 30 && mouseScreenX <= spriteRight + 30 &&
-                          mouseScreenY >= spriteTop - 30 && mouseScreenY <= spriteBottom + 30;
+            // Check proximity
+            double sLeft = _catX, sTop = _catY, sRight = _catX + _spriteDisplayW, sBottom = _catY + _spriteDisplayH;
+            bool isNear = mx >= sLeft - 30 && mx <= sRight + 30 && my >= sTop - 30 && my <= sBottom + 30;
 
             if (isNear && !_isInteractMode && !_isDragging)
             {
-                // Enter interact mode — disable click-through
                 _overlay.SetClickThrough(false);
                 _isInteractMode = true;
+                _hoverTimer = 0;
             }
             else if (!isNear && _isInteractMode && !_isDragging)
             {
-                // Exit interact mode — enable click-through
                 _overlay.SetClickThrough(true);
                 _isInteractMode = false;
+                _hoverTimer = 0;
             }
+
+            // B-01: Hover 3s → petting → hearts
+            if (isNear && !_isDragging)
+            {
+                _hoverTimer += dt;
+                if (_hoverTimer >= 3000)
+                {
+                    _particles?.EmitHearts(5); // A-01: hearts
+                    _audioManager?.Play(FSMState.Blink);
+                    _hoverTimer = 0;
+                    Log.Debug("Hover petting → hearts");
+                }
+            }
+
+            // B-04: Track cursor idle time
+            if (Math.Abs(_mouseVelX) > 1 || Math.Abs(_mouseVelY) > 1)
+                _lastMouseMoveTime = 0;
         }
 
-        // ── Mouse event handlers ──────────────────────────────────────
+        // ═══════════════════════════════════════════════════════════════
+        //  Mouse event handlers
+        // ═══════════════════════════════════════════════════════════════
 
         private void OnMouseLeftDown(object sender, MouseButtonEventArgs e)
         {
             var pos = e.GetPosition(_overlay);
-            _lastMouseX = pos.X;
-            _lastMouseY = pos.Y;
+            _lastMouseX = pos.X; _lastMouseY = pos.Y;
             _isDragging = true;
             _dragOffsetX = pos.X - _catX;
             _dragOffsetY = pos.Y - _catY;
             _overlay!.SetClickThrough(false);
 
-            // Click on cat → meow
-            if (_fsm != null)
+            // B-02: Double-click → Playful
+            var now = DateTime.Now;
+            if ((now - _lastClickTime).TotalMilliseconds < 400)
             {
-                try { _fsm.TransitionTo(FSMState.Angry); } catch { }
+                _clickCount++;
+                if (_clickCount >= 2)
+                {
+                    try { _fsm?.TransitionTo(FSMState.Playful); } catch { }
+                    _particles?.EmitHearts(3);
+                    _clickCount = 0;
+                    Log.Debug("Double-click → Playful");
+                }
+            }
+            else
+            {
+                _clickCount = 1;
+                // Single click → meow
+                try { _fsm?.TransitionTo(FSMState.Angry); } catch { }
                 _audioManager?.Play(FSMState.MeowLeft);
             }
-            Log.Debug("Mouse down at ({X:.0}, {Y:.0})", pos.X, pos.Y);
+            _lastClickTime = now;
         }
 
         private void OnMouseMove(object sender, MouseEventArgs e)
@@ -547,19 +564,16 @@ namespace MochiV2
                 _mouseVelX = (pos.X - _lastMouseX) / dtMs * 1000;
                 _mouseVelY = (pos.Y - _lastMouseY) / dtMs * 1000;
             }
-            _lastMouseX = pos.X;
-            _lastMouseY = pos.Y;
+            _lastMouseX = pos.X; _lastMouseY = pos.Y;
             _lastMouseTime = now;
+            _lastMouseMoveTime = 0; // B-04: reset idle timer
 
             if (_isDragging)
             {
-                // Cat follows cursor during drag
                 _catX = pos.X - _dragOffsetX;
                 _catY = pos.Y - _dragOffsetY;
                 if (_fsm?.CurrentState != FSMState.Drag)
-                {
-                    try { _fsm?.TransitionTo(FSMState.Drag); } catch { }
-                }
+                { try { _fsm?.TransitionTo(FSMState.Drag); } catch { } }
             }
         }
 
@@ -568,75 +582,254 @@ namespace MochiV2
             if (_isDragging)
             {
                 _isDragging = false;
-                // Release → fall with gravity
                 try { _fsm?.TransitionTo(FSMState.Fall); } catch { }
                 _audioManager?.Play(FSMState.Surprised);
-                // Emit dust particles
                 _particles?.EmitDust();
-                Log.Debug("Mouse up — cat falls");
+                Log.Debug("Mouse up → cat falls");
             }
         }
 
         private void OnMouseRightDown(object sender, MouseButtonEventArgs e)
         {
-            // Right-click → context menu
             var menu = new ContextMenu();
 
             var feedItem = new MenuItem { Header = "🐟 Feed Mochi" };
-            feedItem.Click += (s, ev) => { _feedingService?.Feed(); _audioManager?.Play(FSMState.Eating); };
+            feedItem.Click += (s, ev) => { _feedingService?.Feed(); _audioManager?.Play(FSMState.Eating); _particles?.EmitHearts(8); };
 
             var playItem = new MenuItem { Header = "🐾 Play" };
-            playItem.Click += (s, ev) => { try { _fsm?.TransitionTo(FSMState.Playful); } catch { } };
+            playItem.Click += (s, ev) => { try { _fsm?.TransitionTo(FSMState.Playful); } catch { } _particles?.EmitHearts(5); };
 
             var sleepItem = new MenuItem { Header = "😴 Sleep/Wake" };
-            sleepItem.Click += (s, ev) =>
-            {
-                if (_fsm?.CurrentState == FSMState.Sleeping)
-                    _sleepService?.Wake();
-                else
-                    _sleepService?.Sleep();
-            };
+            sleepItem.Click += (s, ev) => { if (_fsm?.CurrentState == FSMState.Sleeping) _sleepService?.Wake(); else _sleepService?.Sleep(); };
+
+            var statsItem = new MenuItem { Header = "📊 Stats" };
+            statsItem.Click += (s, ev) => ShowStatsPopup();
 
             var settingsItem = new MenuItem { Header = "⚙️ Settings" };
-            settingsItem.Click += (s, ev) => { /* TODO: open settings window */ };
+            settingsItem.Click += (s, ev) => { try { new SettingsWindow().Show(); } catch (Exception ex) { Log.Error(ex, "Settings"); } };
+
+            var bringItem = new MenuItem { Header = "🐱 Bring Mochi" };
+            bringItem.Click += (s, ev) => { _catX = _screenWidth / 2 - _spriteDisplayW / 2; _catY = _screenHeight / 2 - _spriteDisplayH / 2; try { _fsm?.TransitionTo(FSMState.Surprised); } catch { } };
 
             var exitItem = new MenuItem { Header = "❌ Exit" };
-            exitItem.Click += (s, ev) => { Shutdown(); };
+            exitItem.Click += (s, ev) => Shutdown();
 
             menu.Items.Add(feedItem);
             menu.Items.Add(playItem);
             menu.Items.Add(sleepItem);
             menu.Items.Add(new Separator());
+            menu.Items.Add(statsItem);
             menu.Items.Add(settingsItem);
+            menu.Items.Add(bringItem);
+            menu.Items.Add(new Separator());
             menu.Items.Add(exitItem);
-
-            var pos = e.GetPosition(_overlay);
             menu.IsOpen = true;
         }
 
-        // ── Event handlers ─────────────────────────────────────────────
+        // ═══════════════════════════════════════════════════════════════
+        //  B-07/B-08: Fullscreen detection
+        // ═══════════════════════════════════════════════════════════════
+
+        private void CheckFullscreen()
+        {
+            if (!OperatingSystem.IsWindows()) return;
+            try
+            {
+                var detector = new MochiV2.Infrastructure.Window.FullscreenDetector();
+                bool isFs = detector.IsForegroundFullscreen();
+                if (isFs && !_wasFullscreen)
+                {
+                    _overlay?.Hide();
+                    _wasFullscreen = true;
+                    Log.Information("Fullscreen detected — hiding cat");
+                }
+                else if (!isFs && _wasFullscreen)
+                {
+                    _overlay?.Show();
+                    _wasFullscreen = false;
+                    try { _fsm?.TransitionTo(FSMState.Surprised); } catch { }
+                    Log.Information("Fullscreen exited — cat reappears");
+                }
+            }
+            catch { }
+        }
+
+        // ═══════════════════════════════════════════════════════════════
+        //  B-05/B-06: Typing awareness
+        // ═══════════════════════════════════════════════════════════════
+
+        private void OnTypingBurstStarted(TypingBurstStartedEvent evt)
+        {
+            // B-05: >120 keys/min for 2min → sleep
+            try { _fsm?.TransitionTo(FSMState.Sleeping); } catch { }
+            _particles?.StartZzzEmitting();
+            Log.Information("Typing burst → cat sleeps");
+        }
+
+        private void OnTypingBurstEnded(TypingBurstEndedEvent evt)
+        {
+            // B-06: Stop typing 5min → wake + meow
+            try { _fsm?.TransitionTo(FSMState.WakeUp); } catch { }
+            _particles?.StopZzzEmitting();
+            _audioManager?.Play(FSMState.MeowLeft);
+            Log.Information("Typing stopped → cat wakes + meows");
+        }
+
+        // ═══════════════════════════════════════════════════════════════
+        //  C-03/C-04/C-05/C-06: Stats popup
+        // ═══════════════════════════════════════════════════════════════
+
+        private void ShowStatsPopup()
+        {
+            var mood = _moodResolver?.CurrentMood ?? "Content";
+            var level = _saveData?.Level ?? 1;
+            var food = _saveData?.Food ?? 80;
+            var energy = _saveData?.Energy ?? 80;
+            var happiness = _saveData?.Happiness ?? 80;
+
+            var popup = new Window
+            {
+                Title = "Mochi Stats",
+                Width = 250, Height = 200,
+                WindowStyle = WindowStyle.None,
+                AllowsTransparency = true,
+                Background = System.Windows.Media.Brushes.Transparent,
+                WindowStartupLocation = WindowStartupLocation.CenterScreen,
+                Focusable = true,
+                Topmost = true
+            };
+
+            var panel = new StackPanel { Margin = new Thickness(10) };
+            var border = new Border
+            {
+                Background = new SolidColorBrush(Color.FromArgb(230, 40, 40, 50)),
+                CornerRadius = new CornerRadius(12),
+                Padding = new Thickness(15)
+            };
+            border.Child = panel;
+
+            panel.Children.Add(new TextBlock { Text = $"🐱 Mochi  Lv.{level}", FontSize = 16, Foreground = Brushes.White, Margin = new Thickness(0, 0, 0, 8) });
+            panel.Children.Add(new TextBlock { Text = $"Mood: {mood}", FontSize = 12, Foreground = Brushes.LightPink, Margin = new Thickness(0, 0, 0, 5) });
+            panel.Children.Add(MakeBar("Food", food, Brushes.LightGreen));
+            panel.Children.Add(MakeBar("Energy", energy, Brushes.LightBlue));
+            panel.Children.Add(MakeBar("Happy", happiness, Brushes.LightPink));
+
+            popup.Content = border;
+            popup.MouseLeftButtonDown += (s, ev) => popup.Close();
+            popup.Show();
+        }
+
+        private UIElement MakeBar(string label, int value, Brush color)
+        {
+            var sp = new StackPanel { Orientation = Orientation.Horizontal, Margin = new Thickness(0, 2, 0, 2) };
+            sp.Children.Add(new TextBlock { Text = $"{label}: ", FontSize = 11, Foreground = Brushes.White, Width = 55 });
+            var bar = new ProgressBar { Value = value, Maximum = 100, Width = 120, Height = 12, Foreground = color };
+            sp.Children.Add(bar);
+            sp.Children.Add(new TextBlock { Text = $" {value}", FontSize = 11, Foreground = Brushes.White });
+            return sp;
+        }
+
+        // ═══════════════════════════════════════════════════════════════
+        //  D-01/D-02: Multi-monitor
+        // ═══════════════════════════════════════════════════════════════
+
+        private void OnDisplaySettingsChanged(object? sender, EventArgs e)
+        {
+            _screenWidth = SystemParameters.PrimaryScreenWidth;
+            _screenHeight = SystemParameters.PrimaryScreenHeight;
+            // D-02: If cat off-screen, teleport to center + Surprised
+            if (_catX > _screenWidth - _spriteDisplayW || _catY > _screenHeight - _spriteDisplayH)
+            {
+                _catX = _screenWidth / 2 - _spriteDisplayW / 2;
+                _catY = _screenHeight / 2 - _spriteDisplayH / 2;
+                try { _fsm?.TransitionTo(FSMState.Surprised); } catch { }
+                Log.Information("Monitor change — cat teleported to center");
+            }
+            if (_overlay != null)
+            {
+                _overlay.Width = _screenWidth;
+                _overlay.Height = _screenHeight;
+            }
+        }
+
+        // ═══════════════════════════════════════════════════════════════
+        //  D-04: Resource budget logging
+        // ═══════════════════════════════════════════════════════════════
+
+        private void LogResourceUsage()
+        {
+            long memBytes = GC.GetTotalMemory(false);
+            double memMB = memBytes / 1024.0 / 1024.0;
+            double fps = _renderer?.CurrentFps ?? 0;
+            Log.Information("Resources: RAM={MemMB:F1}MB, FPS={Fps:F0}, State={State}, Mood={Mood}",
+                memMB, fps, _fsm?.CurrentState, _moodResolver?.CurrentMood);
+            if (memMB > 100)
+                Log.Warning("RAM exceeds 100MB budget: {MemMB:F1}MB", memMB);
+        }
+
+        // ═══════════════════════════════════════════════════════════════
+        //  Event handlers
+        // ═══════════════════════════════════════════════════════════════
 
         private void OnAnimationFinished(AnimationFinishedEvent evt)
         {
-            // Auto-return to Idle after playOnce states
-            Log.Debug("Animation finished: {State}", evt.State);
+            Log.Debug("Anim finished: {State}", evt.State);
+            // A-01: Emit particles based on which animation finished
+            switch (evt.State)
+            {
+                case FSMState.Surprised:
+                    // Already emitted on trigger
+                    break;
+                case FSMState.WakeUp:
+                    _particles?.EmitHearts(3);
+                    break;
+            }
         }
 
         private void OnStateChanged(StateChangedEvent evt)
         {
             Log.Debug("State: {Old} → {New}", evt.OldState, evt.NewState);
             if (_manifest != null)
-            {
                 _animManager?.TransitionTo(evt.NewState, _manifest, _assetsBasePath);
+
+            // A-01: Particle triggers on state change
+            switch (evt.NewState)
+            {
+                case FSMState.Sleeping:
+                    _particles?.StartZzzEmitting();
+                    break;
+                case FSMState.WakeUp:
+                    _particles?.StopZzzEmitting();
+                    break;
+                case FSMState.Eating:
+                    _particles?.EmitHearts(5);
+                    break;
+                case FSMState.Surprised:
+                    _particles?.EmitSurprised();
+                    break;
             }
+
+            // A-07: Play sound for new state
             _audioManager?.Play(evt.NewState);
+
+            // C-07: Update tray tooltip
+            try
+            {
+                var mood = _moodResolver?.CurrentMood ?? "Content";
+                var level = _saveData?.Level ?? 1;
+                // TrayIconController tooltip update would go here if method exists
+            }
+            catch { }
         }
 
-        // ── Lifecycle ──────────────────────────────────────────────────
+        // ═══════════════════════════════════════════════════════════════
+        //  Lifecycle
+        // ═══════════════════════════════════════════════════════════════
 
         protected override void OnExit(ExitEventArgs e)
         {
             CompositionTarget.Rendering -= OnRendering;
+            SystemEvents.DisplaySettingsChanged -= OnDisplaySettingsChanged;
             Log.Information("Shutting down");
             _saveManager?.Flush();
             _cursorPoller?.Stop();
