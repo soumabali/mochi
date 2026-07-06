@@ -56,3 +56,8 @@ Events: `enter`, `gate-review`, `progress-report`, `close`.
 - verdict: report
 - by: Hermes (Ame)
 - notes: M4 complete. M5 partial (T-017 T-018 done, T-019 T-020 redispatched). Build green throughout.
+
+## 2026-07-06T11:30:00+08:00 | phase 4 BUILD | progress-report
+- verdict: report
+- by: Hermes (Ame)
+- notes: M6 mostly complete. T-021 T-022 T-023 committed (208/208 tests pass). T-024 (manual checklist) pending Dhar's Windows testing. All 20 build tasks (T-001..T-020) done. M7 (fix/close) next.
