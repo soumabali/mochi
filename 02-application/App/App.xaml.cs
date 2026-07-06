@@ -170,6 +170,11 @@ namespace MochiV2
                 // 9. Events
                 _eventBus.Subscribe<AnimationFinishedEvent>(OnAnimationFinished);
                 _eventBus.Subscribe<StateChangedEvent>(OnStateChanged);
+                // Wire FSM.StateChanged → EventBus publish (FSM uses C# event, not EventBus)
+                _fsm.StateChanged += (oldState, newState) =>
+                {
+                    _eventBus.Publish(new StateChangedEvent(oldState, newState));
+                };
 
                 // 10. Render loop
                 _frameTimer = System.Diagnostics.Stopwatch.StartNew();
