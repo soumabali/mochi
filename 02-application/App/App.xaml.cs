@@ -300,6 +300,11 @@ namespace MochiV2
                         _chatWindow?.Show();
                         _chatWindow?.Activate();
                     };
+                    _trayIcon.ChatSettingsAction += () =>
+                    {
+                        var settingsWin = new UI.Chat.ChatSettingsWindow(_chatService!, _saveData!);
+                        settingsWin.Show();
+                    };
                 }
 
                 Log.Information("MochiV2 ready — all phases E-G wired");

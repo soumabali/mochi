@@ -109,6 +109,24 @@ namespace MochiV2.Core.Models
         [JsonPropertyName("pomodoroAutoContinue")]
         public bool PomodoroAutoContinue { get; set; } = true;
 
+        //───────────────────────── Chat/LLM (Post-MVP Phase I) ───────────
+
+        /// <summary>Chat API URL (OpenAI, Ollama, Groq, etc.).</summary>
+        [JsonPropertyName("chatApiUrl")]
+        public string ChatApiUrl { get; set; } = "http://localhost:11434/v1";
+
+        /// <summary>Chat API key (empty for local Ollama).</summary>
+        [JsonPropertyName("chatApiKey")]
+        public string ChatApiKey { get; set; } = "";
+
+        /// <summary>Chat model name.</summary>
+        [JsonPropertyName("chatModel")]
+        public string ChatModel { get; set; } = "llama3.2";
+
+        /// <summary>Whether chat is enabled.</summary>
+        [JsonPropertyName("chatEnabled")]
+        public bool ChatEnabled { get; set; } = true;
+
         //───────────────────────── Meta ──────────────────────────────────
 
         /// <summary>UTC timestamp of the last successful save. Used for offline decay.</summary>
