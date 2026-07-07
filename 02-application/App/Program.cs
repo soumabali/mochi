@@ -189,6 +189,11 @@ namespace MochiV2
             services.AddSingleton<MochiV2.Core.Services.PurrService>();
             services.AddSingleton<MochiV2.Core.Services.ItemDropService>();
 
+            //--- G-3 Features (Post-MVP Phase G) ----------------------------
+            services.AddSingleton<MochiV2.Core.Services.KeyboardReactionService>();
+            services.AddSingleton<MochiV2.Core.Services.MiniBallGameService>();
+            services.AddSingleton<MochiV2.Core.Services.WeatherService>();
+
             // --- Physics ---------------------------------------------------
             services.AddSingleton<MochiV2.Core.Physics.PhysicsEngine>(sp =>
             {

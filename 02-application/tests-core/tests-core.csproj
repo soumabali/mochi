@@ -39,6 +39,9 @@
  <Compile Include="..\Core\Services\ScreenEdgePeekService.cs" Link="Core\Services\%(FileName)%(Extension)" />
  <Compile Include="..\Core\Services\PurrService.cs" Link="Core\Services\%(FileName)%(Extension)" />
  <Compile Include="..\Core\Services\ItemDropService.cs" Link="Core\Services\%(FileName)%(Extension)" />
+ <Compile Include="..\Core\Services\KeyboardReactionService.cs" Link="Core\Services\%(FileName)%(Extension)" />
+ <Compile Include="..\Core\Services\MiniBallGameService.cs" Link="Core\Services\%(FileName)%(Extension)" />
+ <Compile Include="..\Core\Services\WeatherService.cs" Link="Core\Services\%(FileName)%(Extension)" />
   </ItemGroup>
 
   <!-- Infrastructure: SaveManager (no WPF dependency) -->
