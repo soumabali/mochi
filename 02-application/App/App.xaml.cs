@@ -50,6 +50,19 @@ namespace MochiV2
         private SleepService? _sleepService;
         private ISurfaceProvider? _surfaceProvider;
         private SurfaceClimber? _surfaceClimber;
+        private PomodoroService? _pomodoro;
+        private SpeechBubbleService? _speechBubble;
+        private HydrationReminderService? _hydrationReminder;
+        private DailyQuoteService? _dailyQuote;
+        private MoodCheckInService? _moodCheckIn;
+        private QuickLauncherService? _quickLauncher;
+        private HotkeyService? _hotkey;
+        private ScreenEdgePeekService? _screenPeek;
+        private PurrService? _purr;
+        private ItemDropService? _itemDrop;
+        private KeyboardReactionService? _keyboardReaction;
+        private MiniBallGameService? _ballGame;
+        private WeatherService? _weather;
 
         // Frame timing
         private System.Diagnostics.Stopwatch? _frameTimer;
@@ -124,6 +137,19 @@ namespace MochiV2
                 _sleepService = Services.GetRequiredService<SleepService>();
                 _surfaceProvider = Services.GetRequiredService<ISurfaceProvider>();
                 _surfaceClimber = Services.GetRequiredService<SurfaceClimber>();
+                _pomodoro = Services.GetRequiredService<PomodoroService>();
+                _speechBubble = Services.GetRequiredService<SpeechBubbleService>();
+                _hydrationReminder = Services.GetRequiredService<HydrationReminderService>();
+                _dailyQuote = Services.GetRequiredService<DailyQuoteService>();
+                _moodCheckIn = Services.GetRequiredService<MoodCheckInService>();
+                _quickLauncher = Services.GetRequiredService<QuickLauncherService>();
+                _hotkey = Services.GetRequiredService<HotkeyService>();
+                _screenPeek = Services.GetRequiredService<ScreenEdgePeekService>();
+                _purr = Services.GetRequiredService<PurrService>();
+                _itemDrop = Services.GetRequiredService<ItemDropService>();
+                _keyboardReaction = Services.GetRequiredService<KeyboardReactionService>();
+                _ballGame = Services.GetRequiredService<MiniBallGameService>();
+                _weather = Services.GetRequiredService<WeatherService>();
                 _renderer = Services.GetRequiredService<MochiRenderer>();
                 Log.Information("All services resolved");
 
@@ -196,14 +222,33 @@ namespace MochiV2
                 //D-01: Multi-monitor display change detection
                 SystemEvents.DisplaySettingsChanged += OnDisplaySettingsChanged;
 
-                //E-08: Surface provider wired
+                // E-08: Surface provider wired
                 if (_surfaceProvider != null)
                 {
-                _surfaceProvider.SurfacesChanged += OnSurfacesChanged;
-                Log.Information("Surface provider wired");
+                    _surfaceProvider.SurfacesChanged += OnSurfacesChanged;
+                    Log.Information("Surface provider wired");
                 }
 
-                Log.Information("MochiV2 ready all phases wired");
+                // F-07: Pomodoro event subscription
+                if (_eventBus != null)
+                {
+                    _eventBus.Subscribe<MochiV2.Core.Events.PomodoroEvent>(OnPomodoroEvent);
+                }
+
+                // F-04: Speech bubble events
+                if (_speechBubble != null)
+                {
+                    _speechBubble.ShowRequested += OnSpeechBubbleShow;
+                    _speechBubble.HideRequested += OnSpeechBubbleHide;
+                }
+
+                // G-01: Hotkey events
+                if (_hotkey != null)
+                {
+                    _hotkey.HotkeyPressed += OnHotkeyPressed;
+                }
+
+                Log.Information("MochiV2 ready — all phases E-G wired");
             }
             catch (Exception ex)
             {
@@ -286,11 +331,22 @@ namespace MochiV2
                 if (_isLowPowerMode) { _isLowPowerMode = false; Log.Information("Low power mode: exited"); }
             }
 
-            // A-05: Squash & stretch on landing
+            // A-05: Squash stretch landing
             UpdateSquashStretch(dt);
 
             // E-09: Check current surface exists — if gone, trigger Fall
             // (handled via OnSurfacesChanged event)
+
+            // F/G: Post-MVP service ticks
+            try { _speechBubble?.Tick(dt / 1000.0); } catch (Exception ex) { Log.Error(ex, "SpeechBubble"); }
+            try { _pomodoro?.Tick(); } catch (Exception ex) { Log.Error(ex, "Pomodoro"); }
+            try { _hydrationReminder?.Tick(); } catch (Exception ex) { Log.Error(ex, "Hydration"); }
+            try { _dailyQuote?.Tick(); } catch (Exception ex) { Log.Error(ex, "DailyQuote"); }
+            try { _moodCheckIn?.Tick(); } catch (Exception ex) { Log.Error(ex, "MoodCheckIn"); }
+            try { _screenPeek?.Tick(); } catch (Exception ex) { Log.Error(ex, "ScreenPeek"); }
+            try { _keyboardReaction?.Tick(); } catch (Exception ex) { Log.Error(ex, "KeyboardReaction"); }
+            try { _ballGame?.Tick(dt / 1000.0); } catch (Exception ex) { Log.Error(ex, "BallGame"); }
+            try { _itemDrop?.Tick(_catX, _catY); } catch (Exception ex) { Log.Error(ex, "ItemDrop"); }
 
             // Sync renderer
             if (_renderer != null)
@@ -866,13 +922,75 @@ namespace MochiV2
         return services.BuildServiceProvider();
         }
 
-        // E-08: Surface provider changed handler
-        private void OnSurfacesChanged()
-        {
-        Log.Debug("Surfaces changed event received.");
-        // The Win32SurfaceProvider already updated its cache.
-        // If we had a MovementService wired for surface walking,
-        // we'd call CheckSurfaceExists here to trigger Fall if needed.
-        }
-        }
+               // E-08: Surface provider changed handler
+               private void OnSurfacesChanged()
+               {
+                   Log.Debug("Surfaces changed event received.");
+               }
+
+               // F-07: Pomodoro event handler — adjust cat behavior based on timer state
+               private void OnPomodoroEvent(MochiV2.Core.Events.PomodoroEvent ev)
+               {
+                   switch (ev.State)
+                   {
+                       case MochiV2.Core.Models.PomodoroState.Focus:
+                           // Cat stays calm during focus
+                           if (_speechBubble != null && ev.RemainingSeconds > 0 && ev.ElapsedSeconds < 1)
+                               _speechBubble.Show("Focus time! 💪", 3.0);
+                           break;
+                       case MochiV2.Core.Models.PomodoroState.ShortBreak:
+                       case MochiV2.Core.Models.PomodoroState.LongBreak:
+                           // Cat becomes playful during breaks
+                           if (_speechBubble != null && ev.RemainingSeconds > 0 && ev.ElapsedSeconds < 1)
+                               _speechBubble.Show("Break time! 🐱", 3.0);
+                           try { _fsm?.TransitionTo(FSMState.Playful, bypassValidation: true); } catch { }
+                           break;
+                       case MochiV2.Core.Models.PomodoroState.Idle:
+                           if (_speechBubble != null && ev.RemainingSeconds == 0 && ev.ElapsedSeconds == 0)
+                               _speechBubble.Show("Pomodoro selesai! 🎉", 5.0);
+                           break;
+                   }
+               }
+
+               // F-04: Speech bubble show/hide handlers (UI layer would show actual window)
+               private void OnSpeechBubbleShow(string text, double duration)
+               {
+                   Log.Information("Speech bubble: \"{Text}\" for {Dur:F1}s", text, duration);
+                   // TODO: Show SpeechBubbleWindow near cat position
+               }
+
+               private void OnSpeechBubbleHide()
+               {
+                   Log.Debug("Speech bubble hidden");
+                   // TODO: Hide SpeechBubbleWindow
+               }
+
+               // G-01: Hotkey handler
+               private void OnHotkeyPressed(string name)
+               {
+                   Log.Information("Hotkey: {Name}", name);
+                   switch (name)
+                   {
+                       case "teleport_cat":
+                           _catX = _screenWidth / 2 - _spriteDisplayW / 2;
+                           _catY = _screenHeight / 2 - _spriteDisplayH / 2;
+                           try { _fsm?.Interrupt(FSMState.Surprised); } catch { }
+                           break;
+                       case "feed_cat":
+                           try { _feedingService?.Feed(); } catch { }
+                           break;
+                       case "pet_cat":
+                           if (_speechBubble != null) _speechBubble.Show("Purr~ 💚", 3.0);
+                           try { _fsm?.TransitionTo(FSMState.Playful, bypassValidation: true); } catch { }
+                           break;
+                       case "toggle_pomodoro":
+                           if (_pomodoro?.State == MochiV2.Core.Models.PomodoroState.Idle ||
+                               _pomodoro?.State == MochiV2.Core.Models.PomodoroState.Paused)
+                               _pomodoro?.Start();
+                           else
+                               _pomodoro?.Pause();
+                           break;
+                   }
+               }
+           }
         }
