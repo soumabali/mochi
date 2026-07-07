@@ -64,6 +64,7 @@ namespace MochiV2
         private MiniBallGameService? _ballGame;
         private WeatherService? _weather;
         private UI.SpeechBubble.SpeechBubbleWindow? _speechBubbleWindow;
+        private UI.Stats.StatsWindow? _statsWindow;
 
         // Frame timing
         private System.Diagnostics.Stopwatch? _frameTimer;
@@ -246,6 +247,9 @@ namespace MochiV2
                 // F-04: Create speech bubble window
                 _speechBubbleWindow = new UI.SpeechBubble.SpeechBubbleWindow();
 
+                // H-10: Create stats window
+                _statsWindow = new UI.Stats.StatsWindow();
+
                 // G-01: Hotkey events
                 if (_hotkey != null)
                 {
@@ -265,8 +269,22 @@ namespace MochiV2
                         }
                     };
                     _trayIcon.QuickLaunchAction += () => _quickLauncher?.Launch(0);
-                    _trayIcon.MoodCheckInAction += () => _moodCheckIn?.Tick();
-                    _trayIcon.HydrationAction += () => _hydrationReminder?.Reset();
+                    _trayIcon.MoodCheckInAction += () =>
+                    {
+                        _moodCheckIn?.Tick();
+                        if (_speechBubble != null) _speechBubble.Show("Gimana mood kamu? 😊", 10.0);
+                    };
+                    _trayIcon.HydrationAction += () =>
+                    {
+                        _hydrationReminder?.Reset();
+                        if (_speechBubble != null) _speechBubble.Show("Bagus! 💧🐱", 3.0);
+                        try { _fsm?.TransitionTo(FSMState.Drinking, bypassValidation: true); } catch { }
+                    };
+                    _trayIcon.StatsAction += () =>
+                    {
+                        _statsWindow?.Show();
+                        UpdateStatsWindow();
+                    };
                 }
 
                 Log.Information("MochiV2 ready — all phases E-G wired");
@@ -942,6 +960,25 @@ namespace MochiV2
         Program.ConfigureServices(services);
         return services.BuildServiceProvider();
         }
+
+               // H-11: Update stats window with current data
+               private void UpdateStatsWindow()
+               {
+                   if (_statsWindow == null) return;
+                   int food = _saveData?.Food ?? 80;
+                   int energy = _saveData?.Energy ?? 80;
+                   int happiness = _saveData?.Happiness ?? 80;
+                   string mood = _moodResolver?.CurrentMood ?? "Content";
+                   int level = _saveData?.Level ?? 1;
+                   int xp = _saveData?.Level > 0 ? (_saveData.TotalFed * 10 + _saveData.TotalPetted * 5) : 0;
+                   int xpNext = level * 100;
+                   string pomState = _pomodoro?.State.ToString() ?? "Idle";
+                   double remaining = _pomodoro?.RemainingSeconds ?? 0;
+                   string pomTime = $"{(int)remaining/60:D2}:{(int)remaining%60:D2}";
+                   string temp = _weather?.HasWeather == true ? $"{_weather.Current!.Temperature:F0}°C" : "--°C";
+                   string desc = _weather?.HasWeather == true ? _weather.Current!.Description : "--";
+                   _statsWindow.UpdateStats(food, energy, happiness, mood, level, xp, xpNext, pomState, pomTime, temp, desc);
+               }
 
                // E-08: Surface provider changed handler
                private void OnSurfacesChanged()

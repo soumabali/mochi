@@ -34,6 +34,9 @@ namespace MochiV2.UI.Tray
         private bool _isSleeping;
         private bool _disposed;
 
+        /// <summary>Fired when stats menu item clicked.</summary>
+        public event Action? StatsAction;
+
         /// <summary>Fired when pomodoro menu item clicked. Passes "start"/"pause"/"reset".</summary>
         public event Action<string>? PomodoroAction;
 
@@ -93,8 +96,8 @@ namespace MochiV2.UI.Tray
 
             menu.Items.Add(new System.Windows.Controls.Separator());
 
-            var statsItem = new System.Windows.Controls.MenuItem { Header = "Stats" };
-            statsItem.Click += OnStatsClick;
+	var statsItem = new System.Windows.Controls.MenuItem { Header = "Stats" };
+	statsItem.Click += (s, e) => StatsAction?.Invoke();
             menu.Items.Add(statsItem);
 
             var settingsItem = new System.Windows.Controls.MenuItem { Header = "Settings" };
