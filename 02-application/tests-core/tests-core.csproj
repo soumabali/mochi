@@ -36,6 +36,9 @@
     <Compile Include="..\Core\Services\MoodCheckInService.cs" Link="Core\Services\%(FileName)%(Extension)" />
     <Compile Include="..\Core\Services\QuickLauncherService.cs" Link="Core\Services\%(FileName)%(Extension)" />
     <Compile Include="..\Core\Services\HotkeyService.cs" Link="Core\Services\%(FileName)%(Extension)" />
+ <Compile Include="..\Core\Services\ScreenEdgePeekService.cs" Link="Core\Services\%(FileName)%(Extension)" />
+ <Compile Include="..\Core\Services\PurrService.cs" Link="Core\Services\%(FileName)%(Extension)" />
+ <Compile Include="..\Core\Services\ItemDropService.cs" Link="Core\Services\%(FileName)%(Extension)" />
   </ItemGroup>
 
   <!-- Infrastructure: SaveManager (no WPF dependency) -->
