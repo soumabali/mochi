@@ -87,6 +87,28 @@ namespace MochiV2.Core.Models
         [JsonPropertyName("enableNightMode")]
         public bool EnableNightMode { get; set; } = false;
 
+        //───────────────────────── Pomodoro (Post-MVP Phase F) ──────────
+
+        /// <summary>Pomodoro focus duration in minutes.</summary>
+        [JsonPropertyName("pomodoroFocusMinutes")]
+        public double PomodoroFocusMinutes { get; set; } = 25.0;
+
+        /// <summary>Pomodoro short break duration in minutes.</summary>
+        [JsonPropertyName("pomodoroShortBreakMinutes")]
+        public double PomodoroShortBreakMinutes { get; set; } = 5.0;
+
+        /// <summary>Pomodoro long break duration in minutes.</summary>
+        [JsonPropertyName("pomodoroLongBreakMinutes")]
+        public double PomodoroLongBreakMinutes { get; set; } = 15.0;
+
+        /// <summary>Pomodoro rounds before long break.</summary>
+        [JsonPropertyName("pomodoroRounds")]
+        public int PomodoroRounds { get; set; } = 4;
+
+        /// <summary>Whether pomodoro auto-continues to next round.</summary>
+        [JsonPropertyName("pomodoroAutoContinue")]
+        public bool PomodoroAutoContinue { get; set; } = true;
+
         //───────────────────────── Meta ──────────────────────────────────
 
         /// <summary>UTC timestamp of the last successful save. Used for offline decay.</summary>

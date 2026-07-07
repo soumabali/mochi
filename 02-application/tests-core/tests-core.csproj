@@ -29,6 +29,8 @@
     <!-- Selectively include Services that have no WPF/Particles dependency -->
     <Compile Include="..\Core\Services\MoodResolver.cs" Link="Core\Services\%(FileName)%(Extension)" />
     <Compile Include="..\Core\Services\NeedsTicker.cs" Link="Core\Services\%(FileName)%(Extension)" />
+    <Compile Include="..\Core\Services\PomodoroService.cs" Link="Core\Services\%(FileName)%(Extension)" />
+    <Compile Include="..\Core\Services\SpeechBubbleService.cs" Link="Core\Services\%(FileName)%(Extension)" />
   </ItemGroup>
 
   <!-- Infrastructure: SaveManager (no WPF dependency) -->

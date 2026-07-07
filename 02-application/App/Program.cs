@@ -173,6 +173,10 @@ namespace MochiV2
             services.AddSingleton<MochiV2.Core.Behavior.ISurfaceProvider, MochiV2.Infrastructure.Window.Win32SurfaceProvider>();
             services.AddSingleton<MochiV2.Core.Behavior.SurfaceClimber>();
 
+            //--- Pomodoro (Post-MVP Phase F) --------------------------------
+            services.AddSingleton<MochiV2.Core.Services.PomodoroService>();
+            services.AddSingleton<MochiV2.Core.Services.SpeechBubbleService>();
+
             // --- Physics ---------------------------------------------------
             services.AddSingleton<MochiV2.Core.Physics.PhysicsEngine>(sp =>
             {
