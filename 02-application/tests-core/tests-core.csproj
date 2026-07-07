@@ -31,6 +31,11 @@
     <Compile Include="..\Core\Services\NeedsTicker.cs" Link="Core\Services\%(FileName)%(Extension)" />
     <Compile Include="..\Core\Services\PomodoroService.cs" Link="Core\Services\%(FileName)%(Extension)" />
     <Compile Include="..\Core\Services\SpeechBubbleService.cs" Link="Core\Services\%(FileName)%(Extension)" />
+    <Compile Include="..\Core\Services\HydrationReminderService.cs" Link="Core\Services\%(FileName)%(Extension)" />
+    <Compile Include="..\Core\Services\DailyQuoteService.cs" Link="Core\Services\%(FileName)%(Extension)" />
+    <Compile Include="..\Core\Services\MoodCheckInService.cs" Link="Core\Services\%(FileName)%(Extension)" />
+    <Compile Include="..\Core\Services\QuickLauncherService.cs" Link="Core\Services\%(FileName)%(Extension)" />
+    <Compile Include="..\Core\Services\HotkeyService.cs" Link="Core\Services\%(FileName)%(Extension)" />
   </ItemGroup>
 
   <!-- Infrastructure: SaveManager (no WPF dependency) -->

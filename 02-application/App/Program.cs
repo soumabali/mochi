@@ -177,6 +177,13 @@ namespace MochiV2
             services.AddSingleton<MochiV2.Core.Services.PomodoroService>();
             services.AddSingleton<MochiV2.Core.Services.SpeechBubbleService>();
 
+            //--- G-1 Features (Post-MVP Phase G) ----------------------------
+            services.AddSingleton<MochiV2.Core.Services.HydrationReminderService>();
+            services.AddSingleton<MochiV2.Core.Services.DailyQuoteService>();
+            services.AddSingleton<MochiV2.Core.Services.MoodCheckInService>();
+            services.AddSingleton<MochiV2.Core.Services.QuickLauncherService>();
+            services.AddSingleton<MochiV2.Core.Services.HotkeyService>();
+
             // --- Physics ---------------------------------------------------
             services.AddSingleton<MochiV2.Core.Physics.PhysicsEngine>(sp =>
             {
