@@ -397,7 +397,13 @@ namespace MochiV2
                 _renderer.MicroMotion = _microMotion;
                 _renderer.NightMode = _nightMode;
                 _renderer.SquashAmount = _squashTimer > 0 ? Math.Sin((_squashTimer / 80.0) * Math.PI) : 0;
-                _renderer.CurrentMood = _moodResolver?.CurrentMood ?? "Content";
+                       _renderer.CurrentMood = _moodResolver?.CurrentMood ?? "Content";
+
+                       // H-18: Pass ball position to renderer
+                       if (_ballGame != null && _ballGame.IsBallActive)
+                           _renderer.BallPosition = _ballGame.BallPosition;
+                       else
+                           _renderer.BallPosition = null;
             }
         }
 

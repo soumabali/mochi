@@ -35,6 +35,10 @@ namespace MochiV2.UI.Overlay
         public double SquashAmount { get; set; } // 0-1, squash on landing
         public string CurrentMood { get; set; } = "Content";
 
+        // H-18/H-19: Post-MVP rendering properties
+        public (double X, double Y)? BallPosition { get; set; }
+        public System.Collections.Generic.List<(double X, double Y, int Type)>? DroppedItems { get; set; }
+
         // Bitmap cache
         private SKBitmap? _cachedBitmap;
         private string? _cachedFramePath;
@@ -137,6 +141,39 @@ namespace MochiV2.UI.Overlay
             {
                 using var tintPaint = new SKPaint { Color = NightTint, Style = SKPaintStyle.Fill };
                 canvas.DrawRect(new SKRect(0, 0, dimensions.Width, dimensions.Height), tintPaint);
+            }
+
+            // H-18: Mini ball game rendering (red circle)
+            if (BallPosition != null)
+            {
+                var (bx, by) = BallPosition.Value;
+                using var ballPaint = new SKPaint { Color = new SKColor(0xFF, 0x6B, 0x6B), IsAntialias = true, Style = SKPaintStyle.Fill };
+                canvas.DrawCircle((float)bx, (float)by, 12f * Scale, ballPaint);
+            }
+
+            // H-19: Item drop rendering (simple colored shapes)
+            if (DroppedItems != null)
+            {
+                foreach (var item in DroppedItems)
+                {
+                    var (ix, iy, type) = item;
+                    var color = type switch
+                    {
+                        0 => new SKColor(0xFF, 0xC0, 0x7A), // Fish = orange
+                        1 => new SKColor(0xFF, 0xD7, 0x00), // Coin = gold
+                        2 => new SKColor(0xFF, 0x69, 0xB4), // Heart = pink
+                        3 => new SKColor(0xFF, 0xFF, 0x00), // Star = yellow
+                        _ => new SKColor(0xFF, 0xFF, 0xFF),
+                    };
+                    using var itemPaint = new SKPaint { Color = color, IsAntialias = true, Style = SKPaintStyle.Fill };
+                    canvas.DrawCircle((float)ix, (float)iy, 10f * Scale, itemPaint);
+                }
+            }
+
+            // H-17: Night mode dream Zzz particles
+            if (NightMode != null && NightMode.IsActive && _frameCount % 60 == 0)
+            {
+                // Subtle dream effect handled by particle system
             }
         }
 
