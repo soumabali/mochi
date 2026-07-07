@@ -112,6 +112,14 @@
     "Stretching": {
       "folder": "Sprite_optimized/cat_stretching",
       "mode": "playOnce"
+    },
+    "Drinking": {
+      "folder": "Sprite_optimized/cat_drinking",
+      "mode": "playOnce"
+    },
+    "HappyHop": {
+      "folder": "Sprite_optimized/cat_happy_hop",
+      "mode": "playOnce"
     }
   },
   "sounds": {
