@@ -34,6 +34,18 @@ namespace MochiV2.UI.Tray
         private bool _isSleeping;
         private bool _disposed;
 
+        /// <summary>Fired when pomodoro menu item clicked. Passes "start"/"pause"/"reset".</summary>
+        public event Action<string>? PomodoroAction;
+
+        /// <summary>Fired when quick launch menu item clicked.</summary>
+        public event Action? QuickLaunchAction;
+
+        /// <summary>Fired when mood check-in menu item clicked.</summary>
+        public event Action? MoodCheckInAction;
+
+        /// <summary>Fired when hydration acknowledgement clicked.</summary>
+        public event Action? HydrationAction;
+
         /// <summary>
         /// Creates the tray icon controller.
         /// </summary>
@@ -92,6 +104,36 @@ namespace MochiV2.UI.Tray
             var bringItem = new System.Windows.Controls.MenuItem { Header = "Bring Mochi" };
             bringItem.Click += OnBringMochiClick;
             menu.Items.Add(bringItem);
+
+            // Post-MVP: Pomodoro submenu
+            menu.Items.Add(new System.Windows.Controls.Separator());
+
+            var pomodoroItem = new System.Windows.Controls.MenuItem { Header = "🍅 Pomodoro" };
+            var pomStart = new System.Windows.Controls.MenuItem { Header = "Start" };
+            pomStart.Click += (s, e) => PomodoroAction?.Invoke("start");
+            pomodoroItem.Items.Add(pomStart);
+            var pomPause = new System.Windows.Controls.MenuItem { Header = "Pause" };
+            pomPause.Click += (s, e) => PomodoroAction?.Invoke("pause");
+            pomodoroItem.Items.Add(pomPause);
+            var pomReset = new System.Windows.Controls.MenuItem { Header = "Reset" };
+            pomReset.Click += (s, e) => PomodoroAction?.Invoke("reset");
+            pomodoroItem.Items.Add(pomReset);
+            menu.Items.Add(pomodoroItem);
+
+            // Post-MVP: Quick Launch submenu
+            var launchItem = new System.Windows.Controls.MenuItem { Header = "🚀 Quick Launch" };
+            launchItem.Click += (s, e) => QuickLaunchAction?.Invoke();
+            menu.Items.Add(launchItem);
+
+            // Post-MVP: Mood Check-In
+            var moodItem = new System.Windows.Controls.MenuItem { Header = "😊 How are you?" };
+            moodItem.Click += (s, e) => MoodCheckInAction?.Invoke();
+            menu.Items.Add(moodItem);
+
+            // Post-MVP: Hydration reminder
+            var hydrateItem = new System.Windows.Controls.MenuItem { Header = "💧 I drank water!" };
+            hydrateItem.Click += (s, e) => HydrationAction?.Invoke();
+            menu.Items.Add(hydrateItem);
 
             menu.Items.Add(new System.Windows.Controls.Separator());
 

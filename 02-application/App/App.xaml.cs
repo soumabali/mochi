@@ -252,6 +252,23 @@ namespace MochiV2
                     _hotkey.HotkeyPressed += OnHotkeyPressed;
                 }
 
+                // G-03: Tray menu actions for post-MVP features
+                if (_trayIcon != null)
+                {
+                    _trayIcon.PomodoroAction += (action) =>
+                    {
+                        switch (action)
+                        {
+                            case "start": _pomodoro?.Start(); break;
+                            case "pause": _pomodoro?.Pause(); break;
+                            case "reset": _pomodoro?.Reset(); break;
+                        }
+                    };
+                    _trayIcon.QuickLaunchAction += () => _quickLauncher?.Launch(0);
+                    _trayIcon.MoodCheckInAction += () => _moodCheckIn?.Tick();
+                    _trayIcon.HydrationAction += () => _hydrationReminder?.Reset();
+                }
+
                 Log.Information("MochiV2 ready — all phases E-G wired");
             }
             catch (Exception ex)
