@@ -63,6 +63,7 @@ namespace MochiV2
         private KeyboardReactionService? _keyboardReaction;
         private MiniBallGameService? _ballGame;
         private WeatherService? _weather;
+        private UI.SpeechBubble.SpeechBubbleWindow? _speechBubbleWindow;
 
         // Frame timing
         private System.Diagnostics.Stopwatch? _frameTimer;
@@ -241,6 +242,9 @@ namespace MochiV2
                     _speechBubble.ShowRequested += OnSpeechBubbleShow;
                     _speechBubble.HideRequested += OnSpeechBubbleHide;
                 }
+
+                // F-04: Create speech bubble window
+                _speechBubbleWindow = new UI.SpeechBubble.SpeechBubbleWindow();
 
                 // G-01: Hotkey events
                 if (_hotkey != null)
@@ -952,17 +956,17 @@ namespace MochiV2
                    }
                }
 
-               // F-04: Speech bubble show/hide handlers (UI layer would show actual window)
+               // F-04: Speech bubble show/hide handlers
                private void OnSpeechBubbleShow(string text, double duration)
                {
                    Log.Information("Speech bubble: \"{Text}\" for {Dur:F1}s", text, duration);
-                   // TODO: Show SpeechBubbleWindow near cat position
+                   _speechBubbleWindow?.ShowAt(text, _catX, _catY, duration);
                }
 
                private void OnSpeechBubbleHide()
                {
                    Log.Debug("Speech bubble hidden");
-                   // TODO: Hide SpeechBubbleWindow
+                   _speechBubbleWindow?.HideWithAnimation();
                }
 
                // G-01: Hotkey handler
