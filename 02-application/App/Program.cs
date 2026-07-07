@@ -194,6 +194,10 @@ namespace MochiV2
             services.AddSingleton<MochiV2.Core.Services.MiniBallGameService>();
             services.AddSingleton<MochiV2.Core.Services.WeatherService>();
 
+            //--- I: Chat/LLM (Post-MVP Phase I) -----------------------------
+            services.AddSingleton<MochiV2.Core.Services.ILLMProvider, MochiV2.Core.Services.OpenAICompatibleProvider>();
+            services.AddSingleton<MochiV2.Core.Services.ChatService>();
+
             // --- Physics ---------------------------------------------------
             services.AddSingleton<MochiV2.Core.Physics.PhysicsEngine>(sp =>
             {

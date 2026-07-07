@@ -1,0 +1,56 @@
+<Window x:Class="MochiV2.UI.Chat.ChatWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="💬 Chat with Mochi"
+        Width="400" Height="500"
+        WindowStyle="SingleBorderWindow"
+        ResizeMode="CanResize"
+        ShowInTaskbar="False"
+        Topmost="True"
+        Background="#FF1E1E2E">
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+
+        <!-- Messages list -->
+        <ScrollViewer Grid.Row="0" VerticalScrollBarVisibility="Auto" x:Name="MessagesScroll">
+            <StackPanel x:Name="MessagesPanel" Margin="12">
+                <TextBlock Text="🐾 Mochi is ready to chat!
+Type a message below and Mochi will respond."
+                           Foreground="#FF6C7086"
+                           FontSize="13"
+                           Margin="0,0,0,12"
+                           TextWrapping="Wrap"/>
+            </StackPanel>
+        </ScrollViewer>
+
+        <!-- Input area -->
+        <Border Grid.Row="1" Background="#FF313244" Padding="8">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+                <TextBox x:Name="InputBox" Grid.Column="0"
+                         Background="#FF45475A"
+                         Foreground="#FFCDD6F4"
+                         BorderThickness="0"
+                         Padding="8,6"
+                         FontSize="14"
+                         KeyDown="OnInputKeyDown"
+                         VerticalContentAlignment="Center"/>
+                <Button Grid.Column="1"
+                        Content="Send"
+                        Background="#FF89B4FA"
+                        Foreground="White"
+                        BorderThickness="0"
+                        Padding="16,6"
+                        Margin="8,0,0,0"
+                        Click="OnSendClick"
+                        FontSize="14"/>
+            </Grid>
+        </Border>
+    </Grid>
+</Window>

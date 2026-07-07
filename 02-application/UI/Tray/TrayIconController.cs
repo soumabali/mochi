@@ -37,6 +37,9 @@ namespace MochiV2.UI.Tray
         /// <summary>Fired when stats menu item clicked.</summary>
         public event Action? StatsAction;
 
+        /// <summary>Fired when chat menu item clicked.</summary>
+        public event Action? ChatAction;
+
         /// <summary>Fired when pomodoro menu item clicked. Passes "start"/"pause"/"reset".</summary>
         public event Action<string>? PomodoroAction;
 
@@ -137,6 +140,11 @@ namespace MochiV2.UI.Tray
             var hydrateItem = new System.Windows.Controls.MenuItem { Header = "💧 I drank water!" };
             hydrateItem.Click += (s, e) => HydrationAction?.Invoke();
             menu.Items.Add(hydrateItem);
+
+        // Post-MVP: Chat with Mochi
+        var chatItem = new System.Windows.Controls.MenuItem { Header = "Chat with Mochi" };
+        chatItem.Click += (s, e) => ChatAction?.Invoke();
+        menu.Items.Add(chatItem);
 
             menu.Items.Add(new System.Windows.Controls.Separator());
 

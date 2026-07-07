@@ -65,6 +65,8 @@ namespace MochiV2
         private WeatherService? _weather;
         private UI.SpeechBubble.SpeechBubbleWindow? _speechBubbleWindow;
         private UI.Stats.StatsWindow? _statsWindow;
+        private ChatService? _chatService;
+        private UI.Chat.ChatWindow? _chatWindow;
 
         // Frame timing
         private System.Diagnostics.Stopwatch? _frameTimer;
@@ -152,6 +154,7 @@ namespace MochiV2
                 _keyboardReaction = Services.GetRequiredService<KeyboardReactionService>();
                 _ballGame = Services.GetRequiredService<MiniBallGameService>();
                 _weather = Services.GetRequiredService<WeatherService>();
+        _chatService = Services.GetRequiredService<ChatService>();
                 _renderer = Services.GetRequiredService<MochiRenderer>();
                 Log.Information("All services resolved");
 
@@ -250,6 +253,9 @@ namespace MochiV2
                 // H-10: Create stats window
                 _statsWindow = new UI.Stats.StatsWindow();
 
+                // I-05: Create chat window (lazy — created on first open)
+                // ChatAction wired via tray menu
+
                 // G-01: Hotkey events
                 if (_hotkey != null)
                 {
@@ -284,6 +290,15 @@ namespace MochiV2
                     {
                         _statsWindow?.Show();
                         UpdateStatsWindow();
+                    };
+                    _trayIcon.ChatAction += () =>
+                    {
+                        if (_chatWindow == null || !_chatWindow.IsVisible)
+                        {
+                            _chatWindow = new UI.Chat.ChatWindow(_chatService!, _speechBubble!);
+                        }
+                        _chatWindow?.Show();
+                        _chatWindow?.Activate();
                     };
                 }
 
