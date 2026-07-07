@@ -67,6 +67,7 @@ namespace MochiV2.Core.Behavior
             FSMState.Blink,
             FSMState.Playful,
             FSMState.ClimbUp, // Post-MVP Phase E: surface climb
+            FSMState.Stretching, // Post-MVP Phase H: stretch after idle
             };
 
             /// <summary>Trigger string for each candidate state.</summary>
@@ -87,6 +88,9 @@ namespace MochiV2.Core.Behavior
             { FSMState.Blink, "blink" },
             { FSMState.Playful, "playful" },
             { FSMState.ClimbUp, "climb_up" },
+            { FSMState.Stretching, "stretch" },
+            { FSMState.Drinking, "drink" },
+            { FSMState.HappyHop, "happy_hop" },
             };
 
         // ─────────────────────── Chained sequences ───────────────────────

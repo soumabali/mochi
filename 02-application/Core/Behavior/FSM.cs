@@ -35,7 +35,10 @@ namespace MochiV2.Core.Behavior
             //Drag interrupt-only treated non-terminal until released.
             //NOT add Drag terminal path RestoreFromInterrupt.
             FSMState.ClimbUp,
-        };
+            FSMState.Stretching,
+            FSMState.Drinking,
+            FSMState.HappyHop,
+            };
 
         private readonly Dictionary<(FSMState From, string Trigger), FSMState> _transitions;
 

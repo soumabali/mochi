@@ -108,6 +108,10 @@
     "Blink": {
       "folder": "Sprite_optimized/cat_blinking_left",
       "mode": "playOnce"
+    },
+    "Stretching": {
+      "folder": "Sprite_optimized/cat_stretching",
+      "mode": "playOnce"
     }
   },
   "sounds": {

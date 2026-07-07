@@ -78,6 +78,15 @@ namespace MochiV2.Core.Models
         Eating,
 
         /// <summary>Climb to window-top surface (playOnce, reuses JumpVar1 sprite).</summary>
-        ClimbUp
-        }
-        }
+        ClimbUp,
+
+        /// <summary>Stretching after waking up (playOnce, AI-generated sprite).</summary>
+        Stretching,
+
+        /// <summary>Drinking water from bowl (playOnce, AI-generated sprite).</summary>
+        Drinking,
+
+        /// <summary>Happy hop bounce (playOnce, AI-generated sprite).</summary>
+        HappyHop
+    }
+}

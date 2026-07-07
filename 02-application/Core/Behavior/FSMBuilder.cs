@@ -101,6 +101,16 @@ namespace MochiV2.Core.Behavior
             b.AddTransition(FSMState.ClimbUp, "done", FSMState.Idle);
             b.AddTransition(FSMState.ClimbUp, "surface_gone", FSMState.Fall);
 
+            //--- Stretching/Drinking/HappyHop: playOnce, done → Idle ---
+            b.AddTransition(FSMState.Idle, "stretch", FSMState.Stretching);
+            b.AddTransition(FSMState.Idle, "drink", FSMState.Drinking);
+            b.AddTransition(FSMState.Idle, "happy_hop", FSMState.HappyHop);
+            b.AddTransition(FSMState.Stretching, "done", FSMState.Idle);
+            b.AddTransition(FSMState.Drinking, "done", FSMState.Idle);
+            b.AddTransition(FSMState.HappyHop, "done", FSMState.Idle);
+            // Note: WakeUp done → Idle via the PlayOnce loop above.
+            // Stretching is triggered separately from Idle via "stretch" trigger.
+
             // --- Playful: loop, stop → Idle ---
             b.AddTransition(FSMState.Playful, "stop", FSMState.Idle);
 

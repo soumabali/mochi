@@ -45,7 +45,7 @@ namespace MochiV2.Tests.Core
             var manifest = await loader.LoadAsync(ManifestPath);
 
             // PRD §5: 25 sprite entries (some alias same folder)
-            Assert.Equal(27, manifest.Sprites.Count);
+            Assert.Equal(28, manifest.Sprites.Count);
             // PRD §5: 11 sound entries
             Assert.Equal(11, manifest.Sounds.Count);
             // PRD §5: 9 statesWithoutSound
