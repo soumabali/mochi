@@ -124,7 +124,7 @@ namespace MochiV2.Infrastructure.Window
         private static extern bool GetMonitorInfo(IntPtr hMonitor, ref MONITORINFO lpmi);
 
         //--- GetDpiForWindow (PerMonitorV2, Windows 10 1607+) ------------
-        [DllImport("user32.dll", SetLastError = true)]
+        [DllImport("user32.dll", SetLastError = true, EntryPoint = "GetDpiForWindow")]
         [SupportedOSPlatform("windows")]
         private static extern uint GetDpiForWindowNative(IntPtr hwnd);
 
@@ -135,23 +135,23 @@ namespace MochiV2.Infrastructure.Window
         private static extern bool EnumWindows(EnumWindowsProc lpEnumFunc, IntPtr lParam);
 
         //--- IsWindowVisible ---------------------------------------------
-        [DllImport("user32.dll", SetLastError = true)]
+        [DllImport("user32.dll", SetLastError = true, EntryPoint = "IsWindowVisible")]
         [SupportedOSPlatform("windows")]
         [return: MarshalAs(UnmanagedType.Bool)]
         private static extern bool IsWindowVisibleNative(IntPtr hWnd);
 
         //--- GetWindowTextLength -----------------------------------------
-        [DllImport("user32.dll", SetLastError = true)]
+        [DllImport("user32.dll", SetLastError = true, EntryPoint = "GetWindowTextLengthW")]
         [SupportedOSPlatform("windows")]
         private static extern int GetWindowTextLengthNative(IntPtr hWnd);
 
         //--- GetWindowText -----------------------------------------------
-        [DllImport("user32.dll", SetLastError = true, CharSet = CharSet.Unicode)]
+        [DllImport("user32.dll", SetLastError = true, CharSet = CharSet.Unicode, EntryPoint = "GetWindowTextW")]
         [SupportedOSPlatform("windows")]
         private static extern int GetWindowTextNative(IntPtr hWnd, StringBuilder lpString, int nMaxCount);
 
         //--- GetClassName ------------------------------------------------
-        [DllImport("user32.dll", SetLastError = true, CharSet = CharSet.Unicode)]
+        [DllImport("user32.dll", SetLastError = true, CharSet = CharSet.Unicode, EntryPoint = "GetClassNameW")]
         [SupportedOSPlatform("windows")]
         private static extern int GetClassNameNative(IntPtr hWnd, StringBuilder lpString, int nMaxCount);
 
