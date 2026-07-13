@@ -107,8 +107,9 @@ namespace MochiV2
         private double _nextBehaviorInterval = 800;
         private double _walkTimer;
         private double _walkDuration;
+        private double _idleTimer; // auto-sleep after idle
 
-        // Roaming
+        //Roaming
         private double _wanderX, _wanderY;
         private double _wanderRetargetTimer;
         private double _jumpTimer;
@@ -435,7 +436,7 @@ namespace MochiV2
         {
             if (_fsm == null) return;
             double targetVelX = 0, targetVelY = 0;
-            double speed = 100;
+            double speed = 140; // faster roaming
 
             switch (_fsm.CurrentState)
             {
@@ -547,7 +548,7 @@ namespace MochiV2
                 PlanNextBehavior();
                 _behaviorTimer = 0;
                 if (_fsm.CurrentState == FSMState.WalkLeft || _fsm.CurrentState == FSMState.WalkRight || _fsm.CurrentState == FSMState.WalkForward)
-                { _walkDuration = 4000 + _rng.NextDouble() * 6000; _walkTimer = 0; }
+                { _walkDuration = 4000 + _rng.NextDouble() * 6000; _walkTimer = 0; _idleTimer = 0; }
                 else if (_fsm.CurrentState == FSMState.RunVar1 || _fsm.CurrentState == FSMState.RunVar2)
                 { _walkDuration = 3000 + _rng.NextDouble() * 4000; _walkTimer = 0; }
                 else
