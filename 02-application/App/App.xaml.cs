@@ -334,6 +334,8 @@ namespace MochiV2
             if (_isLowPowerMode && dt < 100) return;
 
             try { _animManager?.Update(dt); } catch (Exception ex) { Log.Error(ex, "Anim update"); }
+            // Skip movement physics during drag — OnMouseMove sets position directly
+            if (!_isDragging)
             try { UpdateMovement(dt); } catch (Exception ex) { Log.Error(ex, "Movement"); }
             try { _particles?.Update(dt / 1000.0); } catch (Exception ex) { Log.Error(ex, "Particles"); }
 
@@ -556,23 +558,23 @@ namespace MochiV2
             }
         }
 
-        private void PlanNextBehavior()
+                private void PlanNextBehavior()
         {
-            if (_fsm == null) return;
-            var behaviors = new (FSMState state, double weight)[]
+            if (_fsm == null || _planner == null) return;
+
+            // Map MoodResolver mood string → BehaviorPlanner mood string
+            var rawMood = _moodResolver?.CurrentMood ?? "Content";
+            string plannerMood = rawMood switch
             {
-                (FSMState.WalkLeft, 8.0), (FSMState.WalkRight, 8.0),
-                (FSMState.Blink, 1.5), (FSMState.ScratchLeft, 1.0), (FSMState.ScratchRight, 1.0),
-                (FSMState.MeowLeft, 0.8), (FSMState.MeowRight, 0.8),
-                (FSMState.JumpVar1, 0.5), (FSMState.JumpVar2, 0.5),
-                (FSMState.RunVar1, 1.5), (FSMState.RunVar2, 1.5),
-                (FSMState.WalkForward, 2.0),
+                "HungryCritical" or "HungryStandard" => "hungry",
+                "Tired" => "tired",
+                "Sad" => "sad",
+                _ => "neutral"  // Content and anything else → neutral
             };
-            double total = 0; foreach (var (_, w) in behaviors) total += w;
-            double r = _rng.NextDouble() * total;
-            FSMState chosen = FSMState.Idle;
-            foreach (var (s, w) in behaviors) { r -= w; if (r <= 0) { chosen = s; break; } }
-            if (chosen != FSMState.Idle) { try { _fsm.TransitionTo(chosen); } catch { } Log.Debug("Behavior: {State}", chosen); }
+
+            // Use BehaviorPlanner for mood-aware, personality-shifted behavior selection
+            double personality = _saveData?.Personality ?? 0.5;
+            _planner.PlanNextAction(_fsm.CurrentState, plannerMood, personality);
         }
 
         // ═══════════════════════════════════════════════════════════════
@@ -708,6 +710,9 @@ namespace MochiV2
             {
                 _catX = pos.X - _dragOffsetX;
                 _catY = pos.Y - _dragOffsetY;
+                // Clamp to screen bounds — allow full edge, no margin
+                _catX = Math.Max(0, Math.Min(_catX, _screenWidth - _spriteDisplayW));
+                _catY = Math.Max(0, Math.Min(_catY, _screenHeight - _spriteDisplayH));
                 if (_fsm?.CurrentState != FSMState.Drag)
                 { try { _fsm?.TransitionTo(FSMState.Drag); } catch { } }
             }

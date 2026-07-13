@@ -192,7 +192,7 @@ namespace MochiV2.Tests.Core
         [Fact]
         public void ResolveMood_AllAboveThreshold_ReturnsContent()
         {
-            Assert.Equal(MoodResolver.MoodContent,
+            Assert.Equal(MoodResolver.MoodHappy,
                 MoodResolver.ResolveMood(80, 80, 80));
         }
 
@@ -204,7 +204,7 @@ namespace MochiV2.Tests.Core
             using var resolver = new MoodResolver(time, bus);
 
             // Force an initial mood to Content.
-            resolver.Recalculate(80, 80, 80);
+            resolver.Recalculate(50, 25, 50);
             Assert.Equal(MoodResolver.MoodContent, resolver.CurrentMood);
 
             // Track mood change events.

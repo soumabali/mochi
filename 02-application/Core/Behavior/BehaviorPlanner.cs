@@ -50,9 +50,9 @@ namespace MochiV2.Core.Behavior
         /// leaving <see cref="FSMState.Idle"/>. Matches the trigger
         /// table in <see cref="FSMBuilder.CreateDefault"/>.
         /// </summary>
-        private static readonly FSMState[] IdleCandidateStates =
+                private static readonly FSMState[] IdleCandidateStates =
         {
-            FSMState.Idle,          // stay put
+            FSMState.Idle, // stay put
             FSMState.WalkLeft,
             FSMState.WalkRight,
             FSMState.WalkForward,
@@ -66,9 +66,11 @@ namespace MochiV2.Core.Behavior
             FSMState.MeowRight,
             FSMState.Blink,
             FSMState.Playful,
-            FSMState.ClimbUp, // Post-MVP Phase E: surface climb
-            FSMState.Stretching, // Post-MVP Phase H: stretch after idle
-            };
+            FSMState.ClimbUp, // Post-MVP Phase: surface climb
+            FSMState.Stretching, // Post-MVP Phase: stretch after idle
+            FSMState.HappyHop, // Post-MVP: happy bounce
+            FSMState.Drinking, // Post-MVP: drink water
+        };
 
             /// <summary>Trigger string for each candidate state.</summary>
             private static readonly Dictionary<FSMState, string> StateTriggers = new()
@@ -162,6 +164,9 @@ namespace MochiV2.Core.Behavior
                 { FSMState.MeowRight,    3.0 },
                 { FSMState.Blink,       10.0 },
                 { FSMState.Playful,      2.0 },
+                { FSMState.Stretching, 2.0 },
+                { FSMState.HappyHop, 1.0 },
+                { FSMState.Drinking, 1.5 },
             },
 
             [MoodHappy] = new()
@@ -180,6 +185,9 @@ namespace MochiV2.Core.Behavior
                 { FSMState.MeowRight,    5.0 },
                 { FSMState.Blink,        8.0 },
                 { FSMState.Playful,     10.0 },  // happy → playful boost
+                { FSMState.Stretching, 3.0 },
+                { FSMState.HappyHop, 5.0 },
+                { FSMState.Drinking, 1.0 },
             },
 
             [MoodTired] = new()
@@ -198,6 +206,9 @@ namespace MochiV2.Core.Behavior
                 { FSMState.MeowRight,    1.0 },
                 { FSMState.Blink,       12.0 },
                 { FSMState.Playful,      1.0 },
+                { FSMState.Stretching, 4.0 },
+                { FSMState.HappyHop, 0.5 },
+                { FSMState.Drinking, 1.0 },
             },
 
             [MoodHungry] = new()
@@ -216,6 +227,9 @@ namespace MochiV2.Core.Behavior
                 { FSMState.MeowRight,   12.0 },
                 { FSMState.Blink,        6.0 },
                 { FSMState.Playful,      2.0 },
+                { FSMState.Stretching, 1.0 },
+                { FSMState.HappyHop, 0.5 },
+                { FSMState.Drinking, 2.0 },
             },
 
             [MoodSad] = new()
@@ -234,6 +248,9 @@ namespace MochiV2.Core.Behavior
                 { FSMState.MeowRight,    4.0 },
                 { FSMState.Blink,        8.0 },
                 { FSMState.Playful,      1.0 },
+                { FSMState.Stretching, 1.5 },
+                { FSMState.HappyHop, 0.5 },
+                { FSMState.Drinking, 1.0 },
             },
         };
 
@@ -260,6 +277,9 @@ namespace MochiV2.Core.Behavior
             { FSMState.MeowRight,   (0.8, 1.2) },
             { FSMState.Blink,       (1.5, 0.6) },   // calm → blink
             { FSMState.Playful,     (0.2, 2.2) },   // chaotic → playful
+                { FSMState.Stretching, (1.0, 0.8) },
+                { FSMState.HappyHop, (0.5, 1.8) },
+                { FSMState.Drinking, (1.2, 0.5) },
         };
 
         // ─────────────────────────── Ctor ────────────────────────────────

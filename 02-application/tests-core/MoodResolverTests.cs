@@ -77,7 +77,7 @@ namespace MochiV2.Tests.Core
         {
             Assert.Equal(MoodResolver.MoodContent,
                 MoodResolver.ResolveMood(food: 40, energy: 20, happiness: 30));
-            Assert.Equal(MoodResolver.MoodContent,
+            Assert.Equal(MoodResolver.MoodHappy,
                 MoodResolver.ResolveMood(food: 100, energy: 100, happiness: 100));
         }
 
@@ -196,7 +196,7 @@ namespace MochiV2.Tests.Core
 
             // Needs go back to Content before hysteresis elapses
             time.Now = 10;
-            bus.Publish(new NeedsTickEvent(50, 50, 80)); // → Content (same as current)
+            bus.Publish(new NeedsTickEvent(50, 50, 50)); // → Content (below happy) (same as current)
 
             // Even after 60s, no change should occur (pending was cleared)
             time.Now = 100;
@@ -246,7 +246,7 @@ namespace MochiV2.Tests.Core
             var (resolver, time, bus, events) = Make();
             time.Now = 0;
 
-            resolver.Recalculate(80, 80, 80); // Content == current
+        resolver.Recalculate(50, 25, 50); //Content current (below happy thresholds)
 
             Assert.Equal(MoodResolver.MoodContent, resolver.CurrentMood);
             Assert.Empty(events);

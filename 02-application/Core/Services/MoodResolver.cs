@@ -32,12 +32,14 @@ namespace MochiV2.Core.Services
         public const string MoodTired = "Tired";
         public const string MoodSad = "Sad";
         public const string MoodContent = "Content";
+        public const string MoodHappy = "happy";
 
         // Threshold constants (PRD §6.3).
         public const int FoodCriticalThreshold = 20;
         public const int FoodStandardThreshold = 40;
         public const int EnergyTiredThreshold = 20;
         public const int HappinessSadThreshold = 30;
+        public const int HappinessHappyThreshold = 70;
 
         private readonly EventBus _bus;
         private readonly ITimeProvider _time;
@@ -82,7 +84,9 @@ namespace MochiV2.Core.Services
                 return MoodTired;
             if (happiness < HappinessSadThreshold)
                 return MoodSad;
-            return MoodContent;
+            if (happiness > HappinessHappyThreshold && food > FoodStandardThreshold && energy > EnergyTiredThreshold)
+            return MoodHappy;
+        return MoodContent;
         }
 
         /// <summary>

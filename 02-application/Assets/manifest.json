@@ -6,7 +6,7 @@
       "speedMultiplier": 1.0
     },
     "IdleRight": {
-      "folder": "Sprite_optimized/cat_blinking_right",
+      "folder": "Sprite_optimized/cat_idle_right",
       "mode": "holdFirstFrame",
       "speedMultiplier": 1.0
     },
