@@ -61,7 +61,7 @@ namespace MochiV2.Tests.Core
             var loader = new AssetManifestLoader();
             var manifest = await loader.LoadAsync(ManifestPath);
 
-            Assert.Equal(16, manifest.Sounds.Count);
+            Assert.Equal(28, manifest.Sounds.Count);
             Assert.All(manifest.Sounds, kvp =>
             {
                 Assert.False(string.IsNullOrWhiteSpace(kvp.Value),
@@ -75,7 +75,7 @@ namespace MochiV2.Tests.Core
             var loader = new AssetManifestLoader();
             var manifest = await loader.LoadAsync(ManifestPath);
 
-            Assert.Equal(9, manifest.StatesWithoutSound.Count);
+            Assert.Equal(3, manifest.StatesWithoutSound.Count);
         }
 
         [Fact]

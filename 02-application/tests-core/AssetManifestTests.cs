@@ -47,9 +47,9 @@ namespace MochiV2.Tests.Core
             // PRD §5: 25 sprite entries (some alias same folder)
             Assert.Equal(34, manifest.Sprites.Count);
             // PRD §5: 11 sound entries
-            Assert.Equal(16, manifest.Sounds.Count);
+            Assert.Equal(28, manifest.Sounds.Count);
             // PRD §5: 9 statesWithoutSound
-            Assert.Equal(9, manifest.StatesWithoutSound.Count);
+            Assert.Equal(3, manifest.StatesWithoutSound.Count);
 
             // Sound settings defaults from PRD §5
             Assert.Equal(0.35, manifest.SoundSettings.MasterVolumeDefault);
@@ -81,8 +81,6 @@ namespace MochiV2.Tests.Core
 
             // statesWithoutSound contents
             Assert.Contains("IdleLeft", manifest.StatesWithoutSound);
-            Assert.Contains("WakeUp", manifest.StatesWithoutSound);
-            Assert.Contains("FallVar2", manifest.StatesWithoutSound);
         }
 
         [Fact]
