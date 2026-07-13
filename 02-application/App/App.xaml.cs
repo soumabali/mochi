@@ -189,8 +189,8 @@ namespace MochiV2
                 _screenHeight = SystemParameters.PrimaryScreenHeight;
                 _spriteDisplayW = 150 * _displayScale;
                 _spriteDisplayH = 150 * _displayScale;
-                _catX = _screenWidth - _spriteDisplayW - 20;
-                _catY = 20;
+                _catX = _screenWidth - _spriteDisplayW;
+                _catY = 0;
                 _catVelX = 0; _catVelY = 0;
                 _wanderX = _catX; _wanderY = _catY;
                 _wanderRetargetTimer = 0; _jumpTimer = 0;
@@ -494,7 +494,7 @@ namespace MochiV2
             if (_catX < 0) { _catX = 0; _catVelX = 0; if (_fsm.CurrentState == FSMState.WalkLeft) _fsm.TransitionTo(FSMState.WalkRight); _wanderY = _screenHeight * 0.3 + _rng.NextDouble() * _screenHeight * 0.5; }
             if (_catX > _screenWidth - _spriteDisplayW) { _catX = _screenWidth - _spriteDisplayW; _catVelX = 0; if (_fsm.CurrentState == FSMState.WalkRight) _fsm.TransitionTo(FSMState.WalkLeft); _wanderY = _screenHeight * 0.3 + _rng.NextDouble() * _screenHeight * 0.5; }
 
-            double minY = 50, maxY = _screenHeight - _spriteDisplayH - 60;
+            double minY = 0, maxY = _screenHeight - _spriteDisplayH;
             if (_catY < minY) { _catY = minY; _catVelY = 0; _wanderY = maxY * 0.5 + _rng.NextDouble() * maxY * 0.5; }
             if (_catY > maxY) { _catY = maxY; _catVelY = 0; _wanderY = minY + _rng.NextDouble() * maxY * 0.4; }
 
@@ -750,7 +750,7 @@ namespace MochiV2
             settingsItem.Click += (s, ev) => { try { new SettingsWindow().Show(); } catch (Exception ex) { Log.Error(ex, "Settings"); } };
 
             var bringItem = new MenuItem { Header = "🐱 Bring Mochi" };
-            bringItem.Click += (s, ev) => { _catX = _screenWidth - _spriteDisplayW - 20; _catY = _screenHeight / 2 - _spriteDisplayH / 2; try { _fsm?.TransitionTo(FSMState.Surprised); } catch { } };
+            bringItem.Click += (s, ev) => { _catX = _screenWidth - _spriteDisplayW; _catY = _screenHeight / 2 - _spriteDisplayH / 2; try { _fsm?.TransitionTo(FSMState.Surprised); } catch { } };
 
             var exitItem = new MenuItem { Header = "❌ Exit" };
             exitItem.Click += (s, ev) => Shutdown();
@@ -881,7 +881,7 @@ namespace MochiV2
             // D-02: If cat off-screen, teleport to center + Surprised
             if (_catX > _screenWidth - _spriteDisplayW || _catY > _screenHeight - _spriteDisplayH)
             {
-                _catX = _screenWidth - _spriteDisplayW - 20;
+                _catX = _screenWidth - _spriteDisplayW;
                 _catY = _screenHeight / 2 - _spriteDisplayH / 2;
                 try { _fsm?.TransitionTo(FSMState.Surprised); } catch { }
                 Log.Information("Monitor change — cat teleported to center");
@@ -1062,7 +1062,7 @@ namespace MochiV2
                    switch (name)
                    {
                        case "teleport_cat":
-                           _catX = _screenWidth - _spriteDisplayW - 20;
+                           _catX = _screenWidth - _spriteDisplayW;
                            _catY = _screenHeight / 2 - _spriteDisplayH / 2;
                            try { _fsm?.Interrupt(FSMState.Surprised); } catch { }
                            break;
