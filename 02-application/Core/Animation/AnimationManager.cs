@@ -21,6 +21,12 @@ namespace MochiV2.Core.Animation
         private AssetManifest? _lastManifest;
         private string _lastAssetsBasePath = string.Empty;
 
+        // Transition smoothing: minimum time before allowing animation switch
+        private const double TransitionCooldownMs = 200.0;
+        private double _timeSinceTransition = TransitionCooldownMs; // Allow first transition immediately
+        private FSMState _pendingState;
+        private bool _hasPendingTransition;
+
         /// <summary>
         /// Create the manager.
         /// </summary>
@@ -50,8 +56,26 @@ namespace MochiV2.Core.Animation
         {
             if (manifest is null) throw new ArgumentNullException(nameof(manifest));
 
+            // Smooth transitions: only delay when switching FROM a loop animation
+            // (walk/run/playful/angry) to another animation — this prevents jarring switches
+            // in the middle of a walk cycle. Play-once animations finish naturally.
+            if (_timeSinceTransition < TransitionCooldownMs
+                && ActiveController is not null
+                && ActiveController.Mode == SpriteMode.Loop
+                && ActiveState != newState
+                && newState != FSMState.Drag
+                && newState != FSMState.Fall
+                && newState != FSMState.Idle)
+            {
+                _pendingState = newState;
+                _hasPendingTransition = true;
+                return;
+            }
+
             _lastManifest = manifest;
             _lastAssetsBasePath = assetsBasePath;
+            _timeSinceTransition = 0;
+            _hasPendingTransition = false;
 
             if (_cache.TryGetValue(newState, out var cached))
             {
@@ -87,6 +111,18 @@ namespace MochiV2.Core.Animation
         /// </summary>
         public void Update(double deltaTimeMs)
         {
+            _timeSinceTransition += deltaTimeMs;
+
+            // Process pending transition if cooldown has elapsed
+            if (_hasPendingTransition && _timeSinceTransition >= TransitionCooldownMs
+                && _lastManifest is not null)
+            {
+                var pending = _pendingState;
+                _hasPendingTransition = false;
+                TransitionTo(pending, _lastManifest, _lastAssetsBasePath);
+                return;
+            }
+
             if (ActiveController is null) return;
 
             bool wasFinished = ActiveController.IsFinished;

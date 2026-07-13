@@ -68,7 +68,7 @@ namespace MochiV2.Tests.Core
             var eating = manifest.Sprites["Eating"];
             Assert.Equal("Sprite_optimized/begging_food", eating.Folder);
             Assert.Equal(SpriteMode.Loop, eating.Mode);
-            Assert.Equal(0.27, eating.SpeedMultiplier);
+            Assert.Equal(0.83, eating.SpeedMultiplier);
 
             // FallVar1 uses playOnceReversed
             Assert.Equal(SpriteMode.PlayOnceReversed, manifest.Sprites["FallVar1"].Mode);

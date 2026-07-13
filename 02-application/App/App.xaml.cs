@@ -455,11 +455,11 @@ namespace MochiV2
                     targetVelX = (_wanderX - _catX) * 1.5;
                     break;
                 case FSMState.RunVar1:
-                    targetVelX = -speed * 1.8;
+                    targetVelX = -speed * 1.4;
                     targetVelY = (_wanderY - _catY) * 3;
                     break;
                 case FSMState.RunVar2:
-                    targetVelX = speed * 1.8;
+                    targetVelX = speed * 1.4;
                     targetVelY = (_wanderY - _catY) * 3;
                     break;
                 case FSMState.JumpVar1:
@@ -499,7 +499,7 @@ namespace MochiV2
             if (_catY > maxY) { _catY = maxY; _catVelY = 0; _wanderY = minY + _rng.NextDouble() * maxY * 0.4; }
 
             _wanderRetargetTimer += dt;
-            if (_wanderRetargetTimer >= 3000)
+            if (_wanderRetargetTimer >= 5000)
             {
                 _wanderY = minY + _rng.NextDouble() * (maxY - minY);
                 _wanderRetargetTimer = 0;
