@@ -142,8 +142,12 @@ namespace MochiV2
                 builder.AddTransition(MochiV2.Core.Models.FSMState.Playful, "stop", MochiV2.Core.Models.FSMState.Idle);
                 builder.AddTransition(MochiV2.Core.Models.FSMState.Angry, "release", MochiV2.Core.Models.FSMState.Fall);
                 builder.AddTransition(MochiV2.Core.Models.FSMState.Eating, "finish", MochiV2.Core.Models.FSMState.Idle);
+                builder.AddTransition(MochiV2.Core.Models.FSMState.ClimbUp, "finish", MochiV2.Core.Models.FSMState.Idle);
+                builder.AddTransition(MochiV2.Core.Models.FSMState.Stretching, "finish", MochiV2.Core.Models.FSMState.Idle);
+                builder.AddTransition(MochiV2.Core.Models.FSMState.Drinking, "finish", MochiV2.Core.Models.FSMState.Idle);
+                builder.AddTransition(MochiV2.Core.Models.FSMState.HappyHop, "finish", MochiV2.Core.Models.FSMState.Idle);
 
-                // Sleep transitions
+                 //Sleep transitions
                 builder.AddTransition(MochiV2.Core.Models.FSMState.Sleeping, "wake", MochiV2.Core.Models.FSMState.WakeUp);
                 builder.AddTransition(MochiV2.Core.Models.FSMState.HungryStandard, "eat", MochiV2.Core.Models.FSMState.Eating);
                 builder.AddTransition(MochiV2.Core.Models.FSMState.HungryCritical, "eat", MochiV2.Core.Models.FSMState.Eating);
