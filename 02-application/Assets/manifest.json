@@ -120,20 +120,41 @@
     "HappyHop": {
       "folder": "Sprite_optimized/cat_happy_hop",
       "mode": "playOnce"
+    },
+    "Sleeping": {
+      "folder": "Sprite_optimized/cat_sleepy_yawn",
+      "mode": "playOnceThenHoldLast"
+    },
+    "Drag": {
+      "folder": "Sprite_optimized/cat_surpised",
+      "mode": "loop"
+    },
+    "Fall": {
+      "folder": "Sprite_optimized/jump_1",
+      "mode": "playOnceReversed"
+    },
+    "ClimbUp": {
+      "folder": "Sprite_optimized/jump_1",
+      "mode": "playOnce"
     }
   },
   "sounds": {
     "Angry": "Sound/cat_angry_scratch_paw.ogg",
-    "Begging": "Sound/cat_begging.ogg",
-    "Eating": "Sound/cat_begging.ogg",
-    "Blink": "Sound/cat_blinking.ogg",
-    "Playful": "Sound/cat_chasing_wand.ogg",
-    "Meow": "Sound/cat_meowing.ogg",
-    "Scratch": "Sound/cat_scratching.ogg",
-    "Sleep": "Sound/cat_sleepy.ogg",
-    "Surprised": "Sound/cat_surprised.ogg",
-    "Walk": "Sound/cat_walking.ogg",
-    "WalkForward": "Sound/cat_walking_forward.ogg"
+    "Begging": "Sound/begging_food.ogg",
+    "Blink": "Sound/cat_blinking_left.ogg",
+    "Eating": "Sound/begging_food.ogg",
+    "Meow": "Sound/cat_scratching_left.ogg",
+    "Playful": "Sound/cat_surpised.ogg",
+    "Scratch": "Sound/cat_scratching_left.ogg",
+    "Sleep": "Sound/cat_sleepy_yawn.ogg",
+    "Surprised": "Sound/cat_surpised.ogg",
+    "Walk": "Sound/cat_walking_left.ogg",
+    "WalkForward": "Sound/cat_walking_forward.ogg",
+    "Drinking": "Sound/cat_drinking.ogg",
+    "HappyHop": "Sound/cat_happy_hop.ogg",
+    "Stretching": "Sound/cat_stretching.ogg",
+    "Jump": "Sound/jump_1.ogg",
+    "Run": "Sound/run_1.ogg"
   },
   "statesWithoutSound": [
     "IdleLeft",

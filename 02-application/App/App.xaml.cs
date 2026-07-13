@@ -104,7 +104,7 @@ namespace MochiV2
 
         // Behavior
         private Random _rng = new Random();
-        private double _nextBehaviorInterval = 2000;
+        private double _nextBehaviorInterval = 800;
         private double _walkTimer;
         private double _walkDuration;
 
@@ -186,10 +186,10 @@ namespace MochiV2
                 // 6. Init position
                 _screenWidth = SystemParameters.PrimaryScreenWidth;
                 _screenHeight = SystemParameters.PrimaryScreenHeight;
-                _spriteDisplayW = 200 * _displayScale;
-                _spriteDisplayH = 200 * _displayScale;
-                _catX = _screenWidth / 2 - _spriteDisplayW / 2;
-                _catY = _screenHeight - _spriteDisplayH - 60;
+                _spriteDisplayW = 150 * _displayScale;
+                _spriteDisplayH = 150 * _displayScale;
+                _catX = _screenWidth - _spriteDisplayW - 20;
+                _catY = 20;
                 _catVelX = 0; _catVelY = 0;
                 _wanderX = _catX; _wanderY = _catY;
                 _wanderRetargetTimer = 0; _jumpTimer = 0;
@@ -539,7 +539,7 @@ namespace MochiV2
                 {
                     try { _fsm.TransitionTo(FSMState.Idle); } catch { }
                     _walkTimer = 0; _behaviorTimer = 0;
-                    _nextBehaviorInterval = 500 + _rng.NextDouble() * 1500;
+                    _nextBehaviorInterval = 300 + _rng.NextDouble() * 800;
                 }
             }
             else if (_behaviorTimer >= _nextBehaviorInterval)
@@ -547,11 +547,11 @@ namespace MochiV2
                 PlanNextBehavior();
                 _behaviorTimer = 0;
                 if (_fsm.CurrentState == FSMState.WalkLeft || _fsm.CurrentState == FSMState.WalkRight || _fsm.CurrentState == FSMState.WalkForward)
-                { _walkDuration = 3000 + _rng.NextDouble() * 5000; _walkTimer = 0; }
+                { _walkDuration = 4000 + _rng.NextDouble() * 6000; _walkTimer = 0; }
                 else if (_fsm.CurrentState == FSMState.RunVar1 || _fsm.CurrentState == FSMState.RunVar2)
-                { _walkDuration = 2000 + _rng.NextDouble() * 3000; _walkTimer = 0; }
+                { _walkDuration = 3000 + _rng.NextDouble() * 4000; _walkTimer = 0; }
                 else
-                    _nextBehaviorInterval = 500 + _rng.NextDouble() * 1500;
+                    _nextBehaviorInterval = 300 + _rng.NextDouble() * 800;
             }
         }
 
@@ -560,12 +560,12 @@ namespace MochiV2
             if (_fsm == null) return;
             var behaviors = new (FSMState state, double weight)[]
             {
-                (FSMState.WalkLeft, 5.0), (FSMState.WalkRight, 5.0),
-                (FSMState.Blink, 2.0), (FSMState.ScratchLeft, 1.0), (FSMState.ScratchRight, 1.0),
+                (FSMState.WalkLeft, 8.0), (FSMState.WalkRight, 8.0),
+                (FSMState.Blink, 1.5), (FSMState.ScratchLeft, 1.0), (FSMState.ScratchRight, 1.0),
                 (FSMState.MeowLeft, 0.8), (FSMState.MeowRight, 0.8),
                 (FSMState.JumpVar1, 0.5), (FSMState.JumpVar2, 0.5),
-                (FSMState.RunVar1, 0.8), (FSMState.RunVar2, 0.8),
-                (FSMState.WalkForward, 1.5),
+                (FSMState.RunVar1, 1.5), (FSMState.RunVar2, 1.5),
+                (FSMState.WalkForward, 2.0),
             };
             double total = 0; foreach (var (_, w) in behaviors) total += w;
             double r = _rng.NextDouble() * total;
@@ -744,7 +744,7 @@ namespace MochiV2
             settingsItem.Click += (s, ev) => { try { new SettingsWindow().Show(); } catch (Exception ex) { Log.Error(ex, "Settings"); } };
 
             var bringItem = new MenuItem { Header = "🐱 Bring Mochi" };
-            bringItem.Click += (s, ev) => { _catX = _screenWidth / 2 - _spriteDisplayW / 2; _catY = _screenHeight / 2 - _spriteDisplayH / 2; try { _fsm?.TransitionTo(FSMState.Surprised); } catch { } };
+            bringItem.Click += (s, ev) => { _catX = _screenWidth - _spriteDisplayW - 20; _catY = _screenHeight / 2 - _spriteDisplayH / 2; try { _fsm?.TransitionTo(FSMState.Surprised); } catch { } };
 
             var exitItem = new MenuItem { Header = "❌ Exit" };
             exitItem.Click += (s, ev) => Shutdown();
@@ -875,7 +875,7 @@ namespace MochiV2
             // D-02: If cat off-screen, teleport to center + Surprised
             if (_catX > _screenWidth - _spriteDisplayW || _catY > _screenHeight - _spriteDisplayH)
             {
-                _catX = _screenWidth / 2 - _spriteDisplayW / 2;
+                _catX = _screenWidth - _spriteDisplayW - 20;
                 _catY = _screenHeight / 2 - _spriteDisplayH / 2;
                 try { _fsm?.TransitionTo(FSMState.Surprised); } catch { }
                 Log.Information("Monitor change — cat teleported to center");
@@ -1056,7 +1056,7 @@ namespace MochiV2
                    switch (name)
                    {
                        case "teleport_cat":
-                           _catX = _screenWidth / 2 - _spriteDisplayW / 2;
+                           _catX = _screenWidth - _spriteDisplayW - 20;
                            _catY = _screenHeight / 2 - _spriteDisplayH / 2;
                            try { _fsm?.Interrupt(FSMState.Surprised); } catch { }
                            break;
