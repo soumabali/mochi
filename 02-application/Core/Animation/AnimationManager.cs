@@ -137,7 +137,7 @@ namespace MochiV2.Core.Animation
                 _eventBus?.Publish(new AnimationFinishedEvent(ActiveState));
 
                 // Auto-return to Idle unless we're already there.
-                if (ActiveState != FSMState.Idle && _lastManifest is not null)
+                if (ActiveState != FSMState.Idle && ActiveState != FSMState.Sleeping && ActiveState != FSMState.Eating && ActiveState != FSMState.HungryStandard && ActiveState != FSMState.HungryCritical && ActiveState != FSMState.Angry && ActiveState != FSMState.Playful && _lastManifest is not null)
                 {
                     TransitionTo(FSMState.Idle, _lastManifest, _lastAssetsBasePath);
                 }
