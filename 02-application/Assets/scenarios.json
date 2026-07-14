@@ -49,7 +49,7 @@
       "id": "S2_play_session",
       "name": "Play Session",
       "trigger": "random_idle",
-      "weight": 0.15,
+      "weight": 0.25,
       "steps": [
         {
           "state": "Idle",
@@ -159,7 +159,7 @@
       "id": "S4_wander_patrol",
       "name": "Wander Patrol",
       "trigger": "random_idle",
-      "weight": 0.4,
+      "weight": 0.25,
       "steps": [
         {
           "state": "Idle",
@@ -240,7 +240,7 @@
       "id": "S6_drink_water",
       "name": "Drink Water",
       "trigger": "random_idle",
-      "weight": 0.1,
+      "weight": 0.15,
       "steps": [
         {
           "state": "Idle",
@@ -267,6 +267,98 @@
           "state": "HappyHop",
           "mode": "playOnce",
           "minDurationMs": 1500
+        },
+        {
+          "state": "Idle",
+          "mode": "hold",
+          "minDurationMs": 1000
+        }
+      ]
+    },
+    {
+      "id": "S7_emotional_burst",
+      "name": "Emotional Burst",
+      "trigger": "random_idle",
+      "weight": 0.3,
+      "steps": [
+        {
+          "state": "Idle",
+          "mode": "hold",
+          "minDurationMs": 500,
+          "maxDurationMs": 1500
+        },
+        {
+          "state": "MeowLeft",
+          "mode": "playOnce",
+          "minDurationMs": 2000
+        },
+        {
+          "state": "Idle",
+          "mode": "hold",
+          "minDurationMs": 500,
+          "maxDurationMs": 1000
+        },
+        {
+          "state": "Blink",
+          "mode": "playOnce",
+          "minDurationMs": 1000
+        },
+        {
+          "state": "Idle",
+          "mode": "hold",
+          "minDurationMs": 500,
+          "maxDurationMs": 1000
+        },
+        {
+          "state": "ScratchLeft",
+          "mode": "playOnce",
+          "minDurationMs": 2500
+        },
+        {
+          "state": "Idle",
+          "mode": "hold",
+          "minDurationMs": 1000,
+          "maxDurationMs": 2000
+        },
+        {
+          "state": "Surprised",
+          "mode": "playOnce",
+          "minDurationMs": 800
+        },
+        {
+          "state": "Idle",
+          "mode": "hold",
+          "minDurationMs": 1000
+        }
+      ]
+    },
+    {
+      "id": "S8_stretch_relax",
+      "name": "Stretch & Relax",
+      "trigger": "random_idle",
+      "weight": 0.2,
+      "steps": [
+        {
+          "state": "Idle",
+          "mode": "hold",
+          "minDurationMs": 1000,
+          "maxDurationMs": 2000
+        },
+        {
+          "state": "Stretching",
+          "mode": "playOnce",
+          "minDurationMs": 2500
+        },
+        {
+          "state": "Idle",
+          "mode": "hold",
+          "minDurationMs": 1000,
+          "maxDurationMs": 2000
+        },
+        {
+          "state": "Blink",
+          "mode": "playOnce",
+          "minDurationMs": 1000
         },
         {
           "state": "Idle",

@@ -957,10 +957,24 @@ namespace MochiV2
             switch (evt.State)
             {
                 case FSMState.Surprised:
-                    // Already emitted on trigger
+                    // emitted on trigger
                     break;
                 case FSMState.WakeUp:
                     _particles?.EmitHearts(3);
+                    // Bridge: WakeUp -> Stretching -> Idle
+                    try { _fsm?.TransitionTo(FSMState.Stretching, bypassValidation: true); } catch { }
+                    break;
+                case FSMState.Stretching:
+                    // Bridge: Stretching -> Idle (natural wake-up complete)
+                    try { _fsm?.TransitionTo(FSMState.Idle); } catch { }
+                    break;
+                case FSMState.HappyHop:
+                    // Bridge: HappyHop -> Idle
+                    try { _fsm?.TransitionTo(FSMState.Idle); } catch { }
+                    break;
+                case FSMState.Drinking:
+                    // Bridge: Drinking -> Idle
+                    try { _fsm?.TransitionTo(FSMState.Idle); } catch { }
                     break;
             }
         }
