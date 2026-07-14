@@ -36,6 +36,9 @@ namespace MochiV2.Core.Services
         /// </summary>
         public const double ZzzIntervalSeconds = 2.0;
 
+        ///<summary>Auto-wake after this many seconds asleep (default: 10 minutes).</summary>
+        public const double SleepDurationSeconds = 600.0;
+
         // ─────────────────────── Dependencies ────────────────────
 
         private readonly ITimeProvider _time;
@@ -48,6 +51,7 @@ namespace MochiV2.Core.Services
         // ─────────────────────── State ───────────────────────────
 
         private bool _asleep;
+        private double _sleepStartSeconds;
         private double _lastZzzSeconds;
         private bool _disposed;
 
@@ -98,6 +102,7 @@ namespace MochiV2.Core.Services
             }
 
             _asleep = true;
+            _sleepStartSeconds = _time.GetElapsedSeconds();
             _lastZzzSeconds = _time.GetElapsedSeconds();
 
             _needs.OnSleepStarted();
@@ -161,6 +166,18 @@ namespace MochiV2.Core.Services
         private void OnNeedsTick(NeedsTickEvent evt)
         {
             if (evt is null) throw new ArgumentNullException(nameof(evt));
+
+            // Auto-wake after sleep duration elapsed
+            if (_asleep)
+            {
+                double elapsed = _time.GetElapsedSeconds() - _sleepStartSeconds;
+                if (elapsed >= SleepDurationSeconds)
+                {
+                    _log.Information("Auto-wake after {Seconds:F0}s sleep", elapsed);
+                    Wake();
+                    return;
+                }
+            }
 
             if (!_asleep && evt.Energy <= AutoSleepThreshold)
             {
