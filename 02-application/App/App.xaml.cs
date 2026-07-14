@@ -343,7 +343,7 @@ namespace MochiV2
             try { _animManager?.Update(dt); } catch (Exception ex) { Log.Error(ex, "Anim update"); }
             // Skip movement physics during drag — OnMouseMove sets position directly
             if (!_isDragging)
-            try { UpdateMovement(dt); } catch (Exception ex) { Log.Error(ex, "Movement"); }
+            if (_fsm?.CurrentState != FSMState.Sleeping) { try { UpdateMovement(dt); } catch (Exception ex) { Log.Error(ex, "Movement"); } }
             try { _particles?.Update(dt / 1000.0); } catch (Exception ex) { Log.Error(ex, "Particles"); }
 
             // Needs every 60s
@@ -358,7 +358,7 @@ namespace MochiV2
 
             // Behavior planning
             if (_fsm?.CurrentState != FSMState.Sleeping && _fsm?.CurrentState != FSMState.Eating && _fsm?.CurrentState != FSMState.Drag) { try { UpdateBehavior(dt); } catch (Exception ex) { Log.Error(ex, "Behavior"); } }
-            try { _scenarioPlayer?.Update(dt); } catch (Exception ex) { Log.Error(ex, "Scenario"); }
+            if (_fsm?.CurrentState != FSMState.Sleeping) { try { _scenarioPlayer?.Update(dt); } catch (Exception ex) { Log.Error(ex, "Scenario"); } }
 
             try { _nightMode?.CheckLocalTime(); } catch { }
             try { _cursorCuriosity?.Tick(); } catch { }
