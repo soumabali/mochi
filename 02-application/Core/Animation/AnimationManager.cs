@@ -22,7 +22,7 @@ namespace MochiV2.Core.Animation
         private string _lastAssetsBasePath = string.Empty;
 
         // Transition smoothing: minimum time before allowing animation switch
-        private const double TransitionCooldownMs = 200.0;
+        private const double TransitionCooldownMs = 500.0;
         private double _timeSinceTransition = TransitionCooldownMs; // Allow first transition immediately
         private FSMState _pendingState;
         private bool _hasPendingTransition;

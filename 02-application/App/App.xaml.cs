@@ -499,9 +499,15 @@ namespace MochiV2
             _catY += _catVelY * dt / 1000;
 
             // Bounds
-            if (_catX < 0) { _catX = 0; _catVelX = 0; if (_fsm.CurrentState == FSMState.WalkLeft) _fsm.TransitionTo(FSMState.WalkRight); _wanderY = _screenHeight * 0.3 + _rng.NextDouble() * _screenHeight * 0.5; }
-            if (_catX > _screenWidth - _spriteDisplayW) { _catX = _screenWidth - _spriteDisplayW; _catVelX = 0; if (_fsm.CurrentState == FSMState.WalkRight) _fsm.TransitionTo(FSMState.WalkLeft); _wanderY = _screenHeight * 0.3 + _rng.NextDouble() * _screenHeight * 0.5; }
-
+                // X bounds: wrap-around or turn_around based on config
+                if (_catX < -_spriteDisplayW) {
+                    if (_edgeBehavior == "wrap") { _catX = _screenWidth - _spriteDisplayW; }
+                    else { _catX = 0; _catVelX = 0; if (_fsm.CurrentState == FSMState.WalkLeft) { _fsm.TransitionTo(FSMState.WalkRight); _wanderY = _screenHeight*0.3+_rng.NextDouble()*_screenHeight*0.5; } }
+                }
+                if (_catX > _screenWidth) {
+                    if (_edgeBehavior == "wrap") { _catX = 0; }
+                    else { _catX = _screenWidth - _spriteDisplayW; _catVelX = 0; if (_fsm.CurrentState == FSMState.WalkRight) { _fsm.TransitionTo(FSMState.WalkLeft); _wanderY = _screenHeight*0.3+_rng.NextDouble()*_screenHeight*0.5; } }
+                }
             double minY = 0, maxY = _screenHeight - _spriteDisplayH;
             if (_catY < minY) { _catY = minY; _catVelY = 0; _wanderY = maxY * 0.5 + _rng.NextDouble() * maxY * 0.5; }
             if (_catY > maxY) { _catY = maxY; _catVelY = 0; _wanderY = minY + _rng.NextDouble() * maxY * 0.4; }
