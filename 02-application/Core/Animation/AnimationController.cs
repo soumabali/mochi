@@ -121,8 +121,7 @@ namespace MochiV2.Core.Animation
                 case SpriteMode.PlayOnce:
                     if (CurrentFrameIndex < _frames.Count - 1)
                         CurrentFrameIndex++;
-                    else
-                        IsFinished = true;
+                    else { _naturalFinish = true; IsFinished = true; }
                     break;
 
                 case SpriteMode.Loop:
@@ -132,19 +131,16 @@ namespace MochiV2.Core.Animation
                 case SpriteMode.PlayOnceReversed:
                     if (CurrentFrameIndex > 0)
                         CurrentFrameIndex--;
-                    else
-                        IsFinished = true;
+                    else { _naturalFinish = true; IsFinished = true; }
                     break;
 
                 case SpriteMode.PlayOnceThenHoldLast:
                     if (CurrentFrameIndex < _frames.Count - 1)
                         CurrentFrameIndex++;
-                    else
-                        IsFinished = true;
+                    else { _naturalFinish = true; IsFinished = true; }
                     break;
 
-                default:
-                    IsFinished = true;
+                default: { _naturalFinish = true; IsFinished = true; }
                     break;
             }
         }
@@ -156,6 +152,7 @@ namespace MochiV2.Core.Animation
         public void Reset()
         {
             IsFinished = false;
+            _naturalFinish = false;
             _accumulator = 0;
             _elapsedMs = 0;
             _naturalFinish = false;

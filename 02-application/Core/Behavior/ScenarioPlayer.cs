@@ -188,6 +188,10 @@ namespace MochiV2.Core.Behavior
                     {
                         try { _fsm.TransitionTo(firstBridge, bypassValidation: true); }
                         catch (Exception ex) { Logger.Debug(ex, "Bridge transition failed"); }
+                        _currentStepIndex--;
+                        _stepElapsedMs = 0;
+                        _stepTargetMs = 500;
+                        return;
                     }
                 }
             }

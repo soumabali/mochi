@@ -347,6 +347,14 @@ namespace MochiV2
                 try { _animManager?.Update(dt); } catch (Exception ex) { Log.Error(ex, "Anim"); }
                 try { _particles?.Update(dt / 1000.0); } catch (Exception ex) { Log.Error(ex, "Particles"); }
                 try { _sleepService?.Update(); } catch { }
+                // Check auto-wake timer (needs ticker for OnNeedsTick to fire)
+                _needsTimer += dt;
+                if (_needsTimer >= 60000)
+                {
+                    try { _needsTicker?.Update(); } catch { }
+                    _needsTimer = 0;
+                }
+                // Sync renderer
                 if (_renderer != null) { _renderer.CatX = _catX; _renderer.CatY = _catY; }
                 try { _saveManager?.NotifyChanged(); } catch { }
                 return;
@@ -712,6 +720,7 @@ namespace MochiV2
 
         private void OnMouseLeftDown(object sender, MouseButtonEventArgs e)
         {
+            if (_fsm?.CurrentState == FSMState.Sleeping) return; // Ignore clicks while sleeping
             var pos = e.GetPosition(_overlay);
             _lastMouseX = pos.X; _lastMouseY = pos.Y;
             _isDragging = true;
