@@ -340,6 +340,18 @@ namespace MochiV2
             // D-05: Low power mode — throttle to ~10fps when sleeping
             if (_isLowPowerMode && dt < 100) return;
 
+            // HARD FREEZE: if Sleeping, skip ALL movement/behavior
+            if (_fsm?.CurrentState == FSMState.Sleeping)
+            {
+                _catVelX = 0; _catVelY = 0;
+                try { _animManager?.Update(dt); } catch (Exception ex) { Log.Error(ex, "Anim"); }
+                try { _particles?.Update(dt / 1000.0); } catch (Exception ex) { Log.Error(ex, "Particles"); }
+                try { _sleepService?.Update(); } catch { }
+                if (_renderer != null) { _renderer.CatX = _catX; _renderer.CatY = _catY; }
+                try { _saveManager?.NotifyChanged(); } catch { }
+                return;
+            }
+
             try { _animManager?.Update(dt); } catch (Exception ex) { Log.Error(ex, "Anim update"); }
             // Skip movement physics during drag — OnMouseMove sets position directly
             if (!_isDragging)
@@ -375,7 +387,7 @@ namespace MochiV2
             }
 
             // B-01/B-04: Interaction mode + hover + cursor idle
-            try { UpdateInteractionMode(dt); } catch (Exception ex) { Log.Error(ex, "Interaction"); }
+            if (_fsm?.CurrentState != FSMState.Sleeping) { try { UpdateInteractionMode(dt); } catch (Exception ex) { Log.Error(ex, "Interaction"); } }
 
             // D-04: Resource budget log every 60s
             _resourceLogTimer += dt;
