@@ -264,5 +264,3 @@ Test coverage: FSM transitions, animation controller, mood resolver, save/load, 
 Private project — © soumabali
 
 ---
-
-Made with 💚 by Dhar & Ame
