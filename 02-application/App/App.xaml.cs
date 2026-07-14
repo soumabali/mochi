@@ -773,13 +773,13 @@ namespace MochiV2
             var menu = new ContextMenu();
 
             var feedItem = new MenuItem { Header = "🐟 Feed Mochi" };
-            feedItem.Click += (s, ev) => { _feedingService?.Feed(); _audioManager?.Play(FSMState.Eating); _particles?.EmitHearts(8); };
+            feedItem.Click += (s, ev) => { _feedingService?.Feed(); _scenarioPlayer?.Stop(); _audioManager?.Play(FSMState.Eating); _particles?.EmitHearts(8); };
 
             var playItem = new MenuItem { Header = "🐾 Play" };
             playItem.Click += (s, ev) => { try { _fsm?.TransitionTo(FSMState.Playful); } catch { } _particles?.EmitHearts(5); };
 
             var sleepItem = new MenuItem { Header = "😴 Sleep/Wake" };
-            sleepItem.Click += (s, ev) => { if (_fsm?.CurrentState == FSMState.Sleeping) _sleepService?.Wake(); else _sleepService?.Sleep(); };
+            sleepItem.Click += (s, ev) => { if (_fsm?.CurrentState == FSMState.Sleeping) _sleepService?.Wake(); else _sleepService?.Sleep(); _scenarioPlayer?.Stop(); };
 
             var statsItem = new MenuItem { Header = "📊 Stats" };
             statsItem.Click += (s, ev) => ShowStatsPopup();
