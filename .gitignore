@@ -1,7 +1,0 @@
-# Hermes run logs (dispatch artifacts, gitignored)
-.hermes/run-logs/
-
-# Temp
-06-temp/*
-!06-temp/.gitkeep
-!06-temp/README.md
