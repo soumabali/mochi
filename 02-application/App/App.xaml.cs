@@ -117,6 +117,7 @@ namespace MochiV2
 
     // Edge behavior: "wrap" (teleport to opposite edge) or "turn_around" (flip facing at edge)
     private string _edgeBehavior = "wrap";
+        private bool _forceSleep = false;
 
         protected override void OnStartup(StartupEventArgs e)
         {
@@ -341,7 +342,7 @@ namespace MochiV2
             if (_isLowPowerMode && dt < 100) return;
 
             // HARD FREEZE: if Sleeping, skip ALL movement/behavior
-            if (_fsm?.CurrentState == FSMState.Sleeping)
+            if (_fsm?.CurrentState == FSMState.Sleeping || _forceSleep)
             {
                 _catVelX = 0; _catVelY = 0;
                 try { _animManager?.Update(dt); } catch (Exception ex) { Log.Error(ex, "Anim"); }
@@ -800,7 +801,7 @@ namespace MochiV2
             playItem.Click += (s, ev) => { try { _fsm?.TransitionTo(FSMState.Playful); } catch { } _particles?.EmitHearts(5); };
 
             var sleepItem = new MenuItem { Header = "😴 Sleep/Wake" };
-            sleepItem.Click += (s, ev) => { if (_fsm?.CurrentState == FSMState.Sleeping) _sleepService?.Wake(); else _sleepService?.Sleep(); _scenarioPlayer?.Stop(); };
+            sleepItem.Click += (s, ev) => { if (_fsm?.CurrentState == FSMState.Sleeping) { _sleepService?.Wake(); _forceSleep = false; } else { _sleepService?.Sleep(); _forceSleep = true; } _scenarioPlayer?.Stop(); };
 
             var statsItem = new MenuItem { Header = "📊 Stats" };
             statsItem.Click += (s, ev) => ShowStatsPopup();
