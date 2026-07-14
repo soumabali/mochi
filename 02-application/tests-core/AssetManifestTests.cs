@@ -66,7 +66,7 @@ namespace MochiV2.Tests.Core
 
             // Eating has speedMultiplier 1.3
             var eating = manifest.Sprites["Eating"];
-            Assert.Equal("Sprite_optimized/begging_food", eating.Folder);
+            Assert.Equal("Sprite_optimized/cat_hungry_begging_food", eating.Folder);
             Assert.Equal(SpriteMode.Loop, eating.Mode);
             Assert.Equal(0.83, eating.SpeedMultiplier);
 

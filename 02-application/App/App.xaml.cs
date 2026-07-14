@@ -357,7 +357,7 @@ namespace MochiV2
             try { _moodResolver?.Tick(); } catch { }
 
             // Behavior planning
-            try { UpdateBehavior(dt); } catch (Exception ex) { Log.Error(ex, "Behavior"); }
+            if (_fsm?.CurrentState != FSMState.Sleeping && _fsm?.CurrentState != FSMState.Eating && _fsm?.CurrentState != FSMState.Drag) { try { UpdateBehavior(dt); } catch (Exception ex) { Log.Error(ex, "Behavior"); } }
             try { _scenarioPlayer?.Update(dt); } catch (Exception ex) { Log.Error(ex, "Scenario"); }
 
             try { _nightMode?.CheckLocalTime(); } catch { }

@@ -169,7 +169,7 @@
       "minDurationMs": 5000
     },
     "Eating": {
-      "folder": "Sprite_optimized/begging_food",
+      "folder": "Sprite_optimized/cat_hungry_begging_food",
       "mode": "loop",
       "speedMultiplier": 0.83,
       "fps": 5,

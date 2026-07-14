@@ -65,6 +65,10 @@ namespace MochiV2.Core.Animation
                 && ActiveState != newState
                 && newState != FSMState.Drag
                 && newState != FSMState.Fall
+                && newState != FSMState.Eating
+                && newState != FSMState.Playful
+                && newState != FSMState.Sleeping
+                && newState != FSMState.WakeUp
                 && newState != FSMState.Idle)
             {
                 _pendingState = newState;
