@@ -127,7 +127,12 @@ namespace MochiV2.Core.Models
         [JsonPropertyName("chatEnabled")]
         public bool ChatEnabled { get; set; } = true;
 
-        //───────────────────────── Meta ──────────────────────────────────
+        //───────────────────────── Edge Behavior ────────────────────────
+
+ ///<summary>Screen-edge behavior: "wrap" (teleport to opposite edge) or "turn_around" (flip facing at edge).</summary>
+[JsonPropertyName("edgeBehavior")]
+        public string EdgeBehavior { get; set; } = "wrap";
+
 
         /// <summary>UTC timestamp of the last successful save. Used for offline decay.</summary>
         [JsonPropertyName("lastSaved")]
@@ -156,6 +161,7 @@ namespace MochiV2.Core.Models
             EnableSound = true,
             EnableTypingAwareness = true,
             EnableNightMode = false,
+            EdgeBehavior = "wrap",
             LastSaved = DateTime.UtcNow,
         };
     }

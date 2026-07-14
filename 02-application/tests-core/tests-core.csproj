@@ -27,6 +27,7 @@
     <Compile Include="..\Core\Behavior\*.cs" Link="Core\Behavior\%(FileName)%(Extension)" />
     <Compile Include="..\Core\Events\*.cs" Link="Core\Events\%(FileName)%(Extension)" />
     <!-- Selectively include Services that have no WPF/Particles dependency -->
+    <Compile Include="..\Core\Services\MoodFSMCompatibility.cs" Link="Core\Services\%(FileName)" />
     <Compile Include="..\Core\Services\MoodResolver.cs" Link="Core\Services\%(FileName)%(Extension)" />
     <Compile Include="..\Core\Services\NeedsTicker.cs" Link="Core\Services\%(FileName)%(Extension)" />
     <Compile Include="..\Core\Services\PomodoroService.cs" Link="Core\Services\%(FileName)%(Extension)" />

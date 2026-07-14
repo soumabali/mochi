@@ -1,0 +1,322 @@
+{
+  "scenarios": [
+    {
+      "id": "S1_morning_wake",
+      "name": "Morning Wake-Up",
+      "trigger": "on_wake",
+      "steps": [
+        {
+          "state": "Sleeping",
+          "mode": "hold",
+          "minDurationMs": 1000,
+          "maxDurationMs": 2000
+        },
+        {
+          "state": "WakeUp",
+          "mode": "playOnce",
+          "minDurationMs": 3000
+        },
+        {
+          "state": "Stretching",
+          "mode": "playOnce",
+          "minDurationMs": 2000
+        },
+        {
+          "state": "Blink",
+          "mode": "playOnce",
+          "minDurationMs": 1000
+        },
+        {
+          "state": "Idle",
+          "mode": "hold",
+          "minDurationMs": 2000,
+          "maxDurationMs": 4000
+        },
+        {
+          "state": "WalkLeft",
+          "mode": "loop",
+          "minDurationMs": 4000,
+          "maxDurationMs": 8000
+        },
+        {
+          "state": "Idle",
+          "mode": "hold",
+          "minDurationMs": 1000
+        }
+      ]
+    },
+    {
+      "id": "S2_play_session",
+      "name": "Play Session",
+      "trigger": "random_idle",
+      "weight": 0.15,
+      "steps": [
+        {
+          "state": "Idle",
+          "mode": "hold",
+          "minDurationMs": 500,
+          "maxDurationMs": 1000
+        },
+        {
+          "state": "Surprised",
+          "mode": "playOnce",
+          "minDurationMs": 800
+        },
+        {
+          "state": "RunVar1",
+          "mode": "loop",
+          "minDurationMs": 2000,
+          "maxDurationMs": 4000
+        },
+        {
+          "state": "Playful",
+          "mode": "loop",
+          "minDurationMs": 6000,
+          "maxDurationMs": 10000
+        },
+        {
+          "state": "Idle",
+          "mode": "hold",
+          "minDurationMs": 1000,
+          "maxDurationMs": 2000
+        },
+        {
+          "state": "ScratchLeft",
+          "mode": "playOnce",
+          "minDurationMs": 2000
+        },
+        {
+          "state": "Idle",
+          "mode": "hold",
+          "minDurationMs": 1000
+        }
+      ]
+    },
+    {
+      "id": "S3_hunger_arc",
+      "name": "Hunger Arc",
+      "trigger": "hunger",
+      "triggerThreshold": {
+        "food": 40
+      },
+      "steps": [
+        {
+          "state": "Idle",
+          "mode": "hold",
+          "minDurationMs": 500
+        },
+        {
+          "state": "MeowRight",
+          "mode": "playOnce",
+          "minDurationMs": 2000
+        },
+        {
+          "state": "Idle",
+          "mode": "hold",
+          "minDurationMs": 500
+        },
+        {
+          "state": "MeowRight",
+          "mode": "playOnce",
+          "minDurationMs": 2000
+        },
+        {
+          "state": "WalkForward",
+          "mode": "loop",
+          "minDurationMs": 2000,
+          "maxDurationMs": 3000
+        },
+        {
+          "state": "HungryStandard",
+          "mode": "loop",
+          "minDurationMs": 10000,
+          "maxDurationMs": 30000
+        },
+        {
+          "state": "Eating",
+          "mode": "loop",
+          "minDurationMs": 3000,
+          "maxDurationMs": 5000
+        },
+        {
+          "state": "HappyHop",
+          "mode": "playOnce",
+          "minDurationMs": 1500
+        },
+        {
+          "state": "Stretching",
+          "mode": "playOnce",
+          "minDurationMs": 2000
+        },
+        {
+          "state": "Idle",
+          "mode": "hold",
+          "minDurationMs": 1000
+        }
+      ]
+    },
+    {
+      "id": "S4_wander_patrol",
+      "name": "Wander Patrol",
+      "trigger": "random_idle",
+      "weight": 0.4,
+      "steps": [
+        {
+          "state": "Idle",
+          "mode": "hold",
+          "minDurationMs": 2000,
+          "maxDurationMs": 4000
+        },
+        {
+          "state": "WalkRight",
+          "mode": "loop",
+          "minDurationMs": 4000,
+          "maxDurationMs": 10000
+        },
+        {
+          "state": "Idle",
+          "mode": "hold",
+          "minDurationMs": 1000,
+          "maxDurationMs": 2000
+        },
+        {
+          "state": "Blink",
+          "mode": "playOnce",
+          "minDurationMs": 1000
+        },
+        {
+          "state": "Blink",
+          "mode": "playOnce",
+          "minDurationMs": 1000
+        },
+        {
+          "state": "Idle",
+          "mode": "hold",
+          "minDurationMs": 1000,
+          "maxDurationMs": 2000
+        }
+      ]
+    },
+    {
+      "id": "S5_startle_flee",
+      "name": "Startle Flee",
+      "trigger": "cursor_near_sleeping",
+      "steps": [
+        {
+          "state": "Surprised",
+          "mode": "playOnce",
+          "minDurationMs": 800
+        },
+        {
+          "state": "JumpVar1",
+          "mode": "playOnce",
+          "minDurationMs": 1500
+        },
+        {
+          "state": "RunVar2",
+          "mode": "loop",
+          "minDurationMs": 2000,
+          "maxDurationMs": 3000
+        },
+        {
+          "state": "Idle",
+          "mode": "hold",
+          "minDurationMs": 2000,
+          "maxDurationMs": 4000
+        },
+        {
+          "state": "Blink",
+          "mode": "playOnce",
+          "minDurationMs": 1000
+        },
+        {
+          "state": "Idle",
+          "mode": "hold",
+          "minDurationMs": 1000
+        }
+      ]
+    },
+    {
+      "id": "S6_drink_water",
+      "name": "Drink Water",
+      "trigger": "random_idle",
+      "weight": 0.1,
+      "steps": [
+        {
+          "state": "Idle",
+          "mode": "hold",
+          "minDurationMs": 500
+        },
+        {
+          "state": "WalkForward",
+          "mode": "loop",
+          "minDurationMs": 2000,
+          "maxDurationMs": 3000
+        },
+        {
+          "state": "Drinking",
+          "mode": "playOnce",
+          "minDurationMs": 2000
+        },
+        {
+          "state": "Idle",
+          "mode": "hold",
+          "minDurationMs": 1000
+        },
+        {
+          "state": "HappyHop",
+          "mode": "playOnce",
+          "minDurationMs": 1500
+        },
+        {
+          "state": "Idle",
+          "mode": "hold",
+          "minDurationMs": 1000
+        }
+      ]
+    }
+  ],
+  "transitions": {
+    "description": "Allowed FSM transitions with bridging states. Direct jumps NOT listed here must route through intermediate states.",
+    "bridges": {
+      "Sleeping->RunVar1": [
+        "WakeUp",
+        "Stretching",
+        "Idle"
+      ],
+      "Sleeping->RunVar2": [
+        "WakeUp",
+        "Stretching",
+        "Idle"
+      ],
+      "Sleeping->WalkLeft": [
+        "WakeUp",
+        "Idle"
+      ],
+      "Sleeping->WalkRight": [
+        "WakeUp",
+        "Idle"
+      ],
+      "Sleeping->Playful": [
+        "WakeUp",
+        "Stretching",
+        "Idle",
+        "Surprised"
+      ],
+      "Eating->RunVar1": [
+        "Idle"
+      ],
+      "Eating->RunVar2": [
+        "Idle"
+      ],
+      "HungryStandard->Sleeping": [
+        "Idle",
+        "WalkLeft"
+      ],
+      "Playful->Sleeping": [
+        "Idle",
+        "WalkLeft"
+      ]
+    }
+  }
+}

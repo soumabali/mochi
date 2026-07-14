@@ -15,6 +15,9 @@ namespace MochiV2.Core.Animation
         private readonly List<string> _frames;
         private readonly double _speedMultiplier;
         private double _accumulator;
+        private double _elapsedMs;
+        private readonly double _minDurationMs;
+        private bool _naturalFinish;
 
         /// <summary>
         /// Create a controller.
@@ -27,18 +30,27 @@ namespace MochiV2.Core.Animation
             string folderPath,
             SpriteMode mode,
             List<string> frames,
-            double speedMultiplier = 1.0)
+            double speedMultiplier = 1.0,
+            double fps = 10.0,
+            double minDurationMs = 0.0)
         {
             _folderPath = folderPath ?? throw new ArgumentNullException(nameof(folderPath));
             _mode = mode;
             _frames = frames ?? throw new ArgumentNullException(nameof(frames));
             _speedMultiplier = speedMultiplier <= 0 ? 1.0 : speedMultiplier;
-            Fps = 10.0;
+            Fps = fps <= 0 ? 10.0 : fps;
+            _minDurationMs = minDurationMs < 0 ? 0.0 : minDurationMs;
             Reset();
         }
 
         /// <summary>Frames per second. Default 10. Settable.</summary>
         public double Fps { get; set; }
+
+        /// <summary>Minimum duration in ms before IsFinished can be signalled.</summary>
+        public double MinDurationMs => _minDurationMs;
+
+        /// <summary>Elapsed time in ms since animation started.</summary>
+        public double ElapsedMs => _elapsedMs;
 
         /// <summary>Current zero-based frame index.</summary>
         public int CurrentFrameIndex { get; private set; }
@@ -69,6 +81,8 @@ namespace MochiV2.Core.Animation
             if (_frames.Count <= 1) return;
             if (_mode == SpriteMode.HoldFirstFrame) return;
 
+            _elapsedMs += deltaTimeMs;
+
             double interval = 1000.0 / Fps / _speedMultiplier;
             _accumulator += deltaTimeMs;
 
@@ -76,6 +90,19 @@ namespace MochiV2.Core.Animation
             {
                 _accumulator -= interval;
                 AdvanceOneFrame();
+            }
+
+            // For loop mode: never signal IsFinished (loops run indefinitely).
+            // The minDurationMs for loops is handled at the AnimationManager level
+            // via the natural loop behavior.
+
+            // For playOnce / playOnceReversed / playOnceThenHoldLast:
+            // if the animation reached its natural end but minDurationMs hasn't
+            // elapsed yet, hold the last frame and wait.
+            if (_naturalFinish && _minDurationMs > 0 && _elapsedMs < _minDurationMs)
+            {
+                // Un-finish: we need to keep holding until minDurationMs
+                IsFinished = false;
             }
 
             // Prevent accumulator from growing unboundedly when paused at terminal
@@ -130,6 +157,8 @@ namespace MochiV2.Core.Animation
         {
             IsFinished = false;
             _accumulator = 0;
+            _elapsedMs = 0;
+            _naturalFinish = false;
             if (_frames.Count == 0)
             {
                 CurrentFrameIndex = 0;

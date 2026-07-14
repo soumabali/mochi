@@ -35,6 +35,7 @@ namespace MochiV2
         private FSM? _fsm;
         private MicroMotionService? _microMotion;
         private BehaviorPlanner? _planner;
+        private ScenarioPlayer? _scenarioPlayer;
         private ParticleSystem? _particles;
         private NeedsTicker? _needsTicker;
         private MoodResolver? _moodResolver;
@@ -114,6 +115,9 @@ namespace MochiV2
         private double _wanderRetargetTimer;
         private double _jumpTimer;
 
+    // Edge behavior: "wrap" (teleport to opposite edge) or "turn_around" (flip facing at edge)
+    private string _edgeBehavior = "wrap";
+
         protected override void OnStartup(StartupEventArgs e)
         {
             base.OnStartup(e);
@@ -183,6 +187,9 @@ namespace MochiV2
                 _saveData = _saveManager.Load();
                 if (_saveData != null && _saveManager.WelcomeBackNeeded)
                     _audioManager.Play(FSMState.MeowLeft);
+
+                // Read edge behavior from save data (default: wrap)
+                _edgeBehavior = _saveData?.EdgeBehavior ?? "wrap";
 
                 // 6. Init position
                 _screenWidth = SystemParameters.PrimaryScreenWidth;
@@ -351,6 +358,7 @@ namespace MochiV2
 
             // Behavior planning
             try { UpdateBehavior(dt); } catch (Exception ex) { Log.Error(ex, "Behavior"); }
+            try { _scenarioPlayer?.Update(dt); } catch (Exception ex) { Log.Error(ex, "Scenario"); }
 
             try { _nightMode?.CheckLocalTime(); } catch { }
             try { _cursorCuriosity?.Tick(); } catch { }
@@ -420,7 +428,7 @@ namespace MochiV2
                 _renderer.MicroMotion = _microMotion;
                 _renderer.NightMode = _nightMode;
                 _renderer.SquashAmount = _squashTimer > 0 ? Math.Sin((_squashTimer / 80.0) * Math.PI) : 0;
-                       _renderer.CurrentMood = _moodResolver?.CurrentMood ?? "Content";
+                       _renderer.CurrentMood = MochiV2.Core.Services.MoodFSMCompatibility.GetDisplayedMood(_fsm?.CurrentState ?? MochiV2.Core.Models.FSMState.Idle, _moodResolver?.CurrentMood ?? "Content");
 
                        // H-18: Pass ball position to renderer
                        if (_ballGame != null && _ballGame.IsBallActive)
@@ -451,7 +459,7 @@ namespace MochiV2
                     targetVelY = (_wanderY - _catY) * 2;
                     break;
                 case FSMState.WalkForward:
-                    targetVelY = speed * 0.5;
+                    targetVelY = speed * 0.2;  // P5: gentle forward walk
                     targetVelX = (_wanderX - _catX) * 1.5;
                     break;
                 case FSMState.RunVar1:
@@ -560,19 +568,43 @@ namespace MochiV2
 
                 private void PlanNextBehavior()
         {
-            if (_fsm == null || _planner == null) return;
+            if (_fsm == null) return;
 
-            // Map MoodResolver mood string → BehaviorPlanner mood string
+            // 1. If a scenario is active, let it drive behavior
+            if (_scenarioPlayer != null && _scenarioPlayer.IsActive)
+                return;
+
+            // 2. Check for triggered scenarios (hunger, wake, etc.)
+            if (_scenarioPlayer != null)
+            {
+                // Hunger arc: trigger when food < 40 and not already eating
+                var food = _saveData?.Food ?? 80;
+                if (food < 40 && _fsm.CurrentState == FSMState.Idle)
+                {
+                    _scenarioPlayer.StartScenarioById("S3_hunger_arc");
+                    return;
+                }
+
+                // Random idle scenario (35% chance)
+                if (_fsm.CurrentState == FSMState.Idle && (_rng?.NextDouble() ?? 0) < 0.35)
+                {
+                    _scenarioPlayer.StartRandomIdleScenario();
+                    return;
+                }
+            }
+
+            // 3. Fall back to BehaviorPlanner for mood-aware random behavior
+            if (_planner == null) return;
+
             var rawMood = _moodResolver?.CurrentMood ?? "Content";
             string plannerMood = rawMood switch
             {
                 "HungryCritical" or "HungryStandard" => "hungry",
                 "Tired" => "tired",
                 "Sad" => "sad",
-                _ => "neutral"  // Content and anything else → neutral
+                _ => "neutral"
             };
 
-            // Use BehaviorPlanner for mood-aware, personality-shifted behavior selection
             double personality = _saveData?.Personality ?? 0.5;
             _planner.PlanNextAction(_fsm.CurrentState, plannerMood, personality);
         }
@@ -822,7 +854,7 @@ namespace MochiV2
 
         private void ShowStatsPopup()
         {
-            var mood = _moodResolver?.CurrentMood ?? "Content";
+            var mood = MochiV2.Core.Services.MoodFSMCompatibility.GetDisplayedMood(_fsm?.CurrentState ?? MochiV2.Core.Models.FSMState.Idle, _moodResolver?.CurrentMood ?? "Content");
             var level = _saveData?.Level ?? 1;
             var food = _saveData?.Food ?? 80;
             var energy = _saveData?.Energy ?? 80;
@@ -956,7 +988,7 @@ namespace MochiV2
             // C-07: Update tray tooltip
             try
             {
-                var mood = _moodResolver?.CurrentMood ?? "Content";
+                var mood = MochiV2.Core.Services.MoodFSMCompatibility.GetDisplayedMood(_fsm?.CurrentState ?? MochiV2.Core.Models.FSMState.Idle, _moodResolver?.CurrentMood ?? "Content");
                 var level = _saveData?.Level ?? 1;
                 // TrayIconController tooltip update would go here if method exists
             }
@@ -1000,7 +1032,7 @@ namespace MochiV2
                    int food = _saveData?.Food ?? 80;
                    int energy = _saveData?.Energy ?? 80;
                    int happiness = _saveData?.Happiness ?? 80;
-                   string mood = _moodResolver?.CurrentMood ?? "Content";
+                   string mood = MochiV2.Core.Services.MoodFSMCompatibility.GetDisplayedMood(_fsm?.CurrentState ?? MochiV2.Core.Models.FSMState.Idle, _moodResolver?.CurrentMood ?? "Content");
                    int level = _saveData?.Level ?? 1;
                    int xp = _saveData?.Level > 0 ? (_saveData.TotalFed * 10 + _saveData.TotalPetted * 5) : 0;
                    int xpNext = level * 100;

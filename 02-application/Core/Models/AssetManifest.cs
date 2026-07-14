@@ -49,6 +49,22 @@ namespace MochiV2.Core.Models
         /// </summary>
         [JsonPropertyName("speedMultiplier")]
         public double SpeedMultiplier { get; set; } = 1.0;
+
+        /// <summary>
+        /// Frames per second playback rate. Defaults to 10 when omitted in JSON.
+        /// Lower values make each frame display longer.
+        /// </summary>
+        [JsonPropertyName("fps")]
+        public int Fps { get; set; } = 10;
+
+        /// <summary>
+        /// Minimum duration in milliseconds the animation should last before
+        /// signalling completion. 0 means natural duration (frames / fps).
+        /// For loops: prevents IsFinished until at least minDurationMs elapsed.
+        /// For playOnce: holds last frame until minDurationMs reached.
+        /// </summary>
+        [JsonPropertyName("minDurationMs")]
+        public double MinDurationMs { get; set; } = 0;
     }
 
     /// <summary>
