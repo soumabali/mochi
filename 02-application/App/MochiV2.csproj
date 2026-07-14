@@ -41,7 +41,16 @@
     <None Include="..\Assets\manifest.json" Link="Assets\manifest.json">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
-  </ItemGroup>
+          <None Include="..\Assets\scenarios.json" Link="Assets\scenarios.json">
+            <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+        </None>
+        <None Include="..\Assets\Sound\*.ogg" Link="Assets\Sound\%(FileName)%(Extension)">
+            <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+        </None>
+        <None Include="..\Assets\Sprite_optimized\**\*.png" Link="Assets\Sprite_optimized\%(RecursiveDir)%(FileName)%(Extension)">
+            <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+        </None>
+    </ItemGroup>
 
   <ItemGroup>
     <!-- D-4: SkiaSharp SKElement for 60fps WPF rendering (sprite + particles).

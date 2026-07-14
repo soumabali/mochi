@@ -98,7 +98,7 @@ namespace MochiV2.Core.Animation
             string folderPath = Path.Combine(assetsBasePath, folder);
             List<string> frames = _loader.EnumerateFrames(folderPath, stateName);
 
-            var controller = new AnimationController(folderPath, mode, frames, speed);
+            var controller = new AnimationController(folderPath, mode, frames, speed, entry?.Fps ?? 10, entry?.MinDurationMs ?? 0);
             _cache[newState] = controller;
             ActiveController = controller;
             ActiveState = newState;
